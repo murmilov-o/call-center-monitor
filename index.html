@@ -284,10 +284,10 @@
 </div>
 
 <script>
-  // 👇👇👇 ВАША ССЫЛКА С RENDER
+// 👇👇👇 ВАША ССЫЛКА
   const API_URL = "https://queue-server-fbi5.onrender.com/stats"; 
 
-  // --- 1. CONSTANTS ---
+  // --- CONSTANTS ---
   const defaultQueueNames = {
     Q700: "TrackEnsure Support", Q701: "TrackEnsure Support rus/ukr", Q801: "Callback rus/ukr", Q800: "Callback",
     Q791: "TrackEnsure New", Q750: "VIP Queue", Q702: "Fleet Supp", Q710: "Alfa Support",
@@ -296,24 +296,16 @@
     Q730: "Smart eLog Support", Q777: "KGZ"
   };
 
-  const translations = {
-    ua: { title: "📞 Активні черги", connecting: "🔄 Підключення...", connected: "✅ З'єднання встановлено", lost: "🔌 З'єднання втрачено...", settings: "Налаштування", visibleQueues: "Видимі черги:", addQueue: "Додати чергу:", add: "Додати", save: "Зберегти", cancel: "Скасувати", accept: "Прийняти", copied: "Скопійовано!", userExt: "Ваш Extension:", userExtPh: "напр. 101" },
-    ru: { title: "📞 Активные очереди", connecting: "🔄 Подключение...", connected: "✅ Соединение установлено", lost: "🔌 Соединение потеряно...", settings: "Настройки", visibleQueues: "Видимые очереди:", addQueue: "Добавить очередь:", add: "Добавить", save: "Сохранить", cancel: "Отмена", accept: "Принять", copied: "Скопировано!", userExt: "Ваш внутренний номер (Extension):", userExtPh: "напр. 101" },
-    en: { title: "📞 Active Queues", connecting: "🔄 Connecting...", connected: "✅ Connected", lost: "🔌 Connection lost...", settings: "Settings", visibleQueues: "Visible queues:", addQueue: "Add Queue:", add: "Add", save: "Save", cancel: "Cancel", accept: "Accept", copied: "Copied!", userExt: "Your Extension:", userExtPh: "e.g. 101" }
-  };
-
-  // --- 2. STATE ---
+  // --- STATE ---
   let currentView = localStorage.getItem('viewMode') || 'grid';
   let isDragEnabled = false;
   
   const queueCallers = {}; 
   const queuesData = {};   
   const timers = {};       
-  
-  // Full stats from server
   let fullStats = { daily: { queues: {} }, queuesPeriods: {}, globalPeriods: { h1:{}, h2:{}, h4:{} } };
 
-  // --- 3. DOM ELEMENTS ---
+  // --- DOM ---
   const statusEl = document.getElementById('status');
   const gridEl = document.getElementById('queuesGrid');
   const listEl = document.getElementById('queuesList');
@@ -322,74 +314,30 @@
   const settingsForm = document.getElementById('settingsForm');
   const dragBtn = document.getElementById('dragBtn');
 
-  // --- 4. HELPERS ---
-  function getLang() { return localStorage.getItem('lang') || 'ua'; }
-  function getTheme() { return localStorage.getItem('theme') || 'light'; }
-  function getUserExt() { return localStorage.getItem('userExt') || ''; }
-  function getCustomQueues() { return JSON.parse(localStorage.getItem('customQueues') || '{}'); }
-  function getAllQueues() { return { ...defaultQueueNames, ...getCustomQueues() }; }
-  function loadVisibleQueues() { return JSON.parse(localStorage.getItem('visibleQueues') || JSON.stringify(Object.keys(getAllQueues()))); }
-  function saveVisibleQueues(list) { localStorage.setItem('visibleQueues', JSON.stringify(list)); }
-  function formatTime(seconds) { const m = String(Math.floor(seconds / 60)).padStart(2, '0'); const s = String(seconds % 60).padStart(2, '0'); return `${m}:${s}`; }
-  function getQStats(qid) {
-      if (!fullStats.daily.queues || !fullStats.daily.queues[qid]) return { ans: 0, abd: 0, sl_hits: 0 };
-      return fullStats.daily.queues[qid];
-  }
-  function detectLanguage(name) { 
-      if (!name) return "?";
-      const u = name.toUpperCase(); 
-      if (u.includes("UKR")) return "ukr"; 
-      if (u.includes("RU")) return "ru"; 
-      if (u.includes("EN")) return "en"; 
-      return "?"; 
-  }
-  function detectName(raw) { 
-      if (!raw) return "";
-      const idx = raw.lastIndexOf(":"); 
-      return idx === -1 ? raw : raw.slice(idx + 1).trim(); 
-  }
-
-  // --- 5. LOGIC: FETCH ---
-  
-  // А) Загружаем статистику (цифры) - регулярно
-  async function fetchStatsOnly() {
+  // --- FETCH STATS ---
+  async function fetchGlobalStats() {
       try {
           const res = await fetch(API_URL);
           if (res.ok) {
               const data = await res.json();
-              fullStats = data; // Обновляем глобальную переменную статистики
-              
-              updateGlobalSummary(); // Обновляем нижнюю панель
-              
-              // Обновляем цифры в карточках
-              const allQ = Object.keys(getAllQueues());
-              allQ.forEach(qid => {
+              fullStats = data;
+              updateGlobalSummary();
+              Object.keys(getAllQueues()).forEach(qid => {
                   updateStatLabels('ls-', qid); 
                   updateStatLabels('l-', qid);
               });
           }
       } catch (e) { console.warn("Stats fetch failed", e); }
   }
+  setInterval(fetchGlobalStats, 10000); 
+  fetchGlobalStats();
 
-  // Б) Загружаем список звонящих - ТОЛЬКО ОДИН РАЗ (при старте), если есть
-  async function fetchInitialState() {
-      try {
-          const res = await fetch(API_URL);
-          if (res.ok) {
-              const data = await res.json();
-              fullStats = data; // Сохраняем стату
-              // Сразу обновляем интерфейс
-              updateGlobalSummary();
-              renderAll();
-          }
-      } catch (e) { console.warn("Initial fetch failed", e); }
+  // --- UI UPDATES ---
+  function getQStats(qid) {
+      if (!fullStats.daily.queues || !fullStats.daily.queues[qid]) return { ans: 0, abd: 0, sl_hits: 0 };
+      return fullStats.daily.queues[qid];
   }
 
-  // Запуск:
-  fetchInitialState(); // 1 раз
-  setInterval(fetchStatsOnly, 10000); // Каждые 10 сек обновляем только цифры
-
-  // --- 6. UI LOGIC ---
   function getTooltipHTML(type, qid) {
       const source = qid ? (fullStats.queuesPeriods[qid] || {}) : fullStats.globalPeriods;
       const h1 = source.h1 || { ans: 0, abd: 0, sl: 0 };
@@ -402,11 +350,10 @@
   function updateStatLabels(prefix, qid) {
       const stats = getQStats(qid);
       const slPercent = stats.ans > 0 ? Math.round((stats.sl_hits / stats.ans) * 100) : 0;
-
+      
       const elAns = document.getElementById(`${prefix}ans-${qid}`);
       const elAbd = document.getElementById(`${prefix}abd-${qid}`);
       const elSl = document.getElementById(`${prefix}sl-${qid}`);
-      
       if(elAns) elAns.textContent = stats.ans;
       if(elAbd) elAbd.textContent = stats.abd;
       if(elSl) elSl.textContent = slPercent + '%';
@@ -414,7 +361,6 @@
       const tipAns = document.getElementById(`${prefix}tip-ans-${qid}`);
       const tipAbd = document.getElementById(`${prefix}tip-abd-${qid}`);
       const tipSl = document.getElementById(`${prefix}tip-sl-${qid}`);
-
       if(tipAns) tipAns.innerHTML = getTooltipHTML('ans', qid);
       if(tipAbd) tipAbd.innerHTML = getTooltipHTML('abd', qid);
       if(tipSl) tipSl.innerHTML = getTooltipHTML('sl', qid);
@@ -463,105 +409,179 @@
       }
   }
 
-  // --- 7. RENDERING ---
+  // --- CORE FUNCTIONS ---
+  function updateQueueData(qid, raw) {
+      queuesData[qid] = { 
+          queued_calls: Number(raw.queued_calls), 
+          logged_in: raw.logged_in_members, 
+          available: raw.available_members, 
+          hold: Number(raw.longest_hold_time || 0) 
+      };
+      const d = queuesData[qid];
+      
+      // Update Grid
+      const card = document.getElementById(`card-${qid}`);
+      if (card) {
+          document.getElementById(`count-${qid}`).textContent = d.queued_calls;
+          document.getElementById(`logged-${qid}`).textContent = d.logged_in;
+          document.getElementById(`avail-${qid}`).textContent = d.available;
+          updateColorClass(card, d.queued_calls);
+          updateStatLabels('ls-', qid);
+      }
+      // Update List
+      const row = document.getElementById(`row-${qid}`);
+      if (row) {
+          document.getElementById(`l-badge-${qid}`).textContent = d.queued_calls;
+          document.getElementById(`l-logged-${qid}`).textContent = d.logged_in;
+          document.getElementById(`l-avail-${qid}`).textContent = d.available;
+          updateRowColor(row, d.queued_calls);
+          updateStatLabels('l-', qid);
+      }
+      handleTimer(qid, d.hold, d.queued_calls);
+      updateGlobalSummary();
+
+      // Clean ghost callers if count is 0
+      if (d.queued_calls === 0) { 
+          queueCallers[qid] = []; 
+          updateCallersList(qid); 
+      }
+  }
+
+  function handleTimer(qid, startSeconds, count) {
+      if (timers[qid]) clearInterval(timers[qid]); 
+      let hold = startSeconds;
+      const render = (val) => {
+          const fmt = formatTime(val); 
+          const colorClass = getHoldColorClass(val);
+          const gh = document.getElementById(`hold-${qid}`); if(gh) { gh.textContent=fmt; gh.className=colorClass; }
+          const lh = document.getElementById(`l-hold-${qid}`); if(lh) { lh.textContent=fmt; lh.className=colorClass; }
+      };
+      render(hold);
+      if (count > 0) timers[qid] = setInterval(() => { hold++; render(hold); updateGlobalSummary(); }, 1000);
+  }
+
+  function updateCallersList(qid) {
+      const callers = queueCallers[qid] || [];
+      // Generate HTML
+      const generateHTML = (list) => {
+          if (!list.length) return '<div style="color:#999;font-style:italic;">No active callers</div>';
+          return list.map((c, i) => {
+              const acceptBtn = c.number ? `<span class="action-btn accept-btn" onclick="event.stopPropagation(); acceptCall('${c.number}')">📞</span>` : '';
+              const copyBtn = c.number ? `<span class="action-btn copy-btn" onclick="event.stopPropagation(); copyText('${c.number}', this)">📋</span>` : '';
+              return `<div class="caller-row"><span class="caller-index">${i + 1}.</span>${acceptBtn}<span class="caller-info">🌐 ${c.lang.toUpperCase()} — ${c.name}</span>${copyBtn}</div>`;
+          }).join('');
+      };
+      
+      const gl = document.getElementById(`callers-${qid}`); 
+      if(gl) gl.innerHTML = generateHTML(callers.slice(0, 5)); // Show max 5 in grid
+      
+      const ll = document.getElementById(`l-callers-${qid}`); 
+      if(ll) ll.innerHTML = generateHTML(callers); // Show all in list
+  }
+
+  // --- WEBSOCKET & PARSING ---
+  function connectWebSocket() {
+    statusEl.textContent = "🔄 Підключення...";
+    const socket = new WebSocket("wss://trackensure.gitstel.net/sw-monitor/?EIO=3&transport=websocket");
+    socket.onopen = () => { statusEl.textContent = "✅ З'єднання встановлено"; };
+    
+    function detectLanguage(name) { 
+        if (!name) return "?";
+        const u = name.toUpperCase(); 
+        if (u.includes("UKR")) return "ukr"; 
+        if (u.includes("RU")) return "ru"; 
+        if (u.includes("EN")) return "en"; 
+        return "?"; 
+    }
+    function detectName(raw) { 
+        if (!raw) return "";
+        const idx = raw.lastIndexOf(":"); 
+        return idx === -1 ? raw : raw.slice(idx + 1).trim(); 
+    }
+
+    socket.onmessage = (event) => {
+      const data = event.data;
+      if (data.startsWith('42')) {
+        try {
+          const payload = JSON.parse(data.slice(2));
+          const type = payload[0];
+          const d = payload[1];
+
+          // 1. UPDATE NUMBERS
+          if (type === 'queue_times') {
+             updateQueueData(d.queue, d);
+          }
+
+          // 2. NEW CALLER JOINED
+          if (type === 'queue_caller_join') {
+            const { queue, position } = d;
+            
+            // AGGRESSIVE NUMBER FINDING
+            const number = d.connectedlinenum || d.calleridnum || d.caller_number || d.MemberName || "";
+            const rawName = d.connectedlinename || d.calleridname || d.caller_name || "Unknown";
+            
+            // Debugging in console
+            console.log("JOIN Event:", d);
+
+            if (queue) {
+                const cleanName = detectName(rawName);
+                const lang = detectLanguage(rawName);
+                
+                let displayText = "—";
+                if (number && cleanName) displayText = `${number} (${cleanName})`;
+                else if (number) displayText = number;
+                else if (cleanName) displayText = cleanName;
+
+                if (!queueCallers[queue]) queueCallers[queue] = [];
+                
+                // Prevent duplicates
+                if (number) {
+                    queueCallers[queue] = queueCallers[queue].filter(c => c.number !== number);
+                }
+                
+                // Insert at position
+                const idx = Math.max((Number(position) || 1) - 1, 0);
+                queueCallers[queue].splice(idx, 0, { name: displayText, number: number, lang: lang });
+                
+                updateCallersList(queue);
+            }
+          }
+
+          // 3. CALLER LEFT/ABANDONED
+          if (type === 'queue_caller_leave' || type === 'queue_caller_abandon') {
+             const { queue, position } = d;
+             if (queue && queueCallers[queue]) {
+                if (position) { 
+                    const idx = Number(position) - 1; 
+                    if (idx >= 0) queueCallers[queue].splice(idx, 1); 
+                } else {
+                    queueCallers[queue].shift();
+                }
+                updateCallersList(queue);
+             }
+          }
+        } catch (err) { console.error(err); }
+      }
+    };
+    socket.onclose = () => { statusEl.textContent = "🔌 З'єднання втрачено..."; setTimeout(connectWebSocket, 5000); };
+  }
+
+  // --- BOILERPLATE HELPERS ---
+  function getLang() { return localStorage.getItem('lang') || 'ua'; }
+  function getTheme() { return localStorage.getItem('theme') || 'light'; }
+  function getUserExt() { return localStorage.getItem('userExt') || ''; }
+  function getCustomQueues() { return JSON.parse(localStorage.getItem('customQueues') || '{}'); }
+  function getAllQueues() { return { ...defaultQueueNames, ...getCustomQueues() }; }
+  function loadVisibleQueues() { return JSON.parse(localStorage.getItem('visibleQueues') || JSON.stringify(Object.keys(getAllQueues()))); }
+  function saveVisibleQueues(list) { localStorage.setItem('visibleQueues', JSON.stringify(list)); }
+  function formatTime(seconds) { const m = String(Math.floor(seconds / 60)).padStart(2, '0'); const s = String(seconds % 60).padStart(2, '0'); return `${m}:${s}`; }
   function switchView(mode) {
       currentView = mode; localStorage.setItem('viewMode', mode);
       const gridBtn = document.getElementById('viewGridBtn'); const listBtn = document.getElementById('viewListBtn');
-      if (mode === 'grid') {
-          gridEl.classList.remove('hidden'); listEl.classList.add('hidden');
-          gridBtn.classList.add('active'); listBtn.classList.remove('active');
-          dragBtn.style.display = 'inline-flex';
-      } else {
-          gridEl.classList.add('hidden'); listEl.classList.remove('hidden');
-          gridBtn.classList.remove('active'); listBtn.classList.add('active');
-          dragBtn.style.display = 'none'; isDragEnabled = false; updateDragUI();
-      }
+      if (mode === 'grid') { gridEl.classList.remove('hidden'); document.getElementById('queuesList').classList.add('hidden'); gridBtn.classList.add('active'); listBtn.classList.remove('active'); dragBtn.style.display = 'inline-flex'; }
+      else { gridEl.classList.add('hidden'); document.getElementById('queuesList').classList.remove('hidden'); gridBtn.classList.remove('active'); listBtn.classList.add('active'); dragBtn.style.display = 'none'; isDragEnabled = false; updateDragUI(); }
       renderAll();
   }
-
-  function renderAll() {
-      const visibleQueues = loadVisibleQueues(); const allQueues = getAllQueues();
-      gridEl.innerHTML = ''; listBody.innerHTML = '';
-      visibleQueues.forEach(qid => {
-          const name = allQueues[qid] || qid;
-          const data = queuesData[qid] || { queued_calls: 0, logged_in: "-", available: "-", hold: 0 };
-          gridEl.appendChild(createCard(qid, name, data));
-          const { mainRow, detailRow } = createListRow(qid, name, data);
-          listBody.appendChild(mainRow); listBody.appendChild(detailRow);
-          updateCallersList(qid);
-      });
-      updateGlobalSummary();
-  }
-
-  function createCard(qid, name, data) {
-      const card = document.createElement('div');
-      card.className = 'card'; card.id = `card-${qid}`; card.setAttribute('draggable', isDragEnabled);
-      card.addEventListener('dragstart', handleDragStart); card.addEventListener('dragenter', handleDragEnter);
-      card.addEventListener('dragover', handleDragOver); card.addEventListener('drop', handleDrop); card.addEventListener('dragend', handleDragEnd);
-
-      const holdClass = getHoldColorClass(data.hold);
-      
-      card.innerHTML = `
-        <div class="queue-name">${name}</div>
-        <div class="queue-id">${qid}</div>
-        <div class="queue-count" id="count-${qid}">${data.queued_calls}</div>
-        <div class="callers-list" id="callers-${qid}"></div>
-        <div class="local-stats-block">
-            <div class="stat-container">
-                <span>Ans: <b id="ls-ans-${qid}">0</b></span>
-                <div class="stat-tooltip" id="ls-tip-ans-${qid}">...</div>
-            </div>
-            <div class="stat-container">
-                <span>Abd: <b id="ls-abd-${qid}" style="color: #c0392b">0</b></span>
-                <div class="stat-tooltip" id="ls-tip-abd-${qid}">...</div>
-            </div>
-            <div class="stat-container">
-                <span>SL: <b id="ls-sl-${qid}">0%</b></span>
-                <div class="stat-tooltip" id="ls-tip-sl-${qid}">...</div>
-            </div>
-        </div>
-        <div class="queue-info-block" style="margin-top:5px;">
-          👥 Logged: <span id="logged-${qid}">${data.logged_in}</span><br>
-          ✅ Avalible: <span id="avail-${qid}">${data.available}</span><br>
-          ⏳ Waiting: <span id="hold-${qid}" class="${holdClass}">${formatTime(data.hold)}</span>
-        </div>
-      `;
-      setTimeout(() => updateStatLabels('ls-', qid), 0);
-      updateColorClass(card, data.queued_calls);
-      return card;
-  }
-
-  function createListRow(qid, name, data) {
-      const tr = document.createElement('tr'); tr.className = 'queue-row'; tr.id = `row-${qid}`; tr.onclick = () => toggleRow(qid);
-      const holdClass = getHoldColorClass(data.hold);
-      tr.innerHTML = `
-        <td><span class="toggle-icon">▶</span> <strong>${name}</strong> <span style="font-size:11px;color:#888;">${qid}</span></td>
-        <td><span id="l-hold-${qid}" class="${holdClass}" style="font-weight:bold;">${formatTime(data.hold)}</span></td>
-        <td><span class="badge" id="l-badge-${qid}">${data.queued_calls}</span></td>
-        <td><span id="l-logged-${qid}">${data.logged_in}</span> / <span id="l-avail-${qid}">${data.available}</span></td>
-        <td style="font-size:13px; color:#555; white-space: nowrap;">
-            <div class="stat-container">
-                SL: <span id="l-sl-${qid}" style="font-weight:bold">0%</span>
-                <div class="stat-tooltip" id="l-tip-sl-${qid}">...</div>
-            </div> | 
-            <div class="stat-container">
-                Abd: <span id="l-abd-${qid}" style="color:#c0392b; font-weight:bold;">0</span>
-                <div class="stat-tooltip" id="l-tip-abd-${qid}">...</div>
-            </div> | 
-            <div class="stat-container">
-                Ans: <span id="l-ans-${qid}" style="color:#27ae60; font-weight:bold;">0</span>
-                <div class="stat-tooltip" id="l-tip-ans-${qid}">...</div>
-            </div>
-        </td>
-      `;
-      const detailTr = document.createElement('tr'); detailTr.className = 'detail-row'; detailTr.id = `detail-${qid}`;
-      detailTr.innerHTML = `<td colspan="5" style="padding:0;"><div class="detail-content"><div class="callers-list" id="l-callers-${qid}"></div></div></td>`;
-      setTimeout(() => updateStatLabels('l-', qid), 0);
-      updateRowColor(tr, data.queued_calls);
-      return { mainRow: tr, detailRow: detailTr };
-  }
-
-  // --- 8. EVENTS & ACTIONS ---
   function toggleDragMode() { isDragEnabled = !isDragEnabled; updateDragUI(); }
   function updateDragUI() { dragBtn.textContent = isDragEnabled ? "✋" : "🔒"; dragBtn.classList.toggle("active", isDragEnabled); document.body.classList.toggle("drag-enabled", isDragEnabled); document.querySelectorAll('.card').forEach(c => c.setAttribute('draggable', isDragEnabled)); }
   function toggleStatsBar() { const bar = document.getElementById('statsBar'); const btn = document.getElementById('statsToggleIcon'); bar.classList.toggle('minimized'); if (bar.classList.contains('minimized')) { btn.textContent = '▲ Статистика'; localStorage.setItem('statsBarMinimized', 'true'); } else { btn.textContent = '▼ Сховати'; localStorage.setItem('statsBarMinimized', 'false'); }}
@@ -572,120 +592,14 @@
   function updateRowColor(row, count) { const badge = row.querySelector('.badge'); if(badge) { badge.className = 'badge'; const num = Number(count); if (num >= 5) badge.classList.add('bg-high'); else if (num >= 3) badge.classList.add('bg-med'); else if (num >= 1) badge.classList.add('bg-low'); } }
   function copyText(text, btnElement) { if (!text) return; navigator.clipboard.writeText(text).then(() => { const original = btnElement.textContent; btnElement.textContent = "✅"; setTimeout(() => btnElement.textContent = original, 1500); }); }
   function acceptCall(callerNumber) { if (!callerNumber) return; const userExt = getUserExt(); if (!userExt) { alert("Extension required!"); openSettings(); return; } window.postMessage({ type: "CONNECT_CALL", userExtension: userExt, targetNumber: callerNumber, source: "queue_monitor" }, "*"); }
-
-  function updateQueueData(qid, raw) {
-      queuesData[qid] = { queued_calls: Number(raw.queued_calls), logged_in: raw.logged_in_members, available: raw.available_members, hold: Number(raw.longest_hold_time || 0) };
-      const d = queuesData[qid];
-      const card = document.getElementById(`card-${qid}`);
-      if (card) {
-          document.getElementById(`count-${qid}`).textContent = d.queued_calls;
-          document.getElementById(`logged-${qid}`).textContent = d.logged_in;
-          document.getElementById(`avail-${qid}`).textContent = d.available;
-          updateColorClass(card, d.queued_calls);
-          updateStatLabels('ls-', qid);
-      }
-      const row = document.getElementById(`row-${qid}`);
-      if (row) {
-          document.getElementById(`l-badge-${qid}`).textContent = d.queued_calls;
-          document.getElementById(`l-logged-${qid}`).textContent = d.logged_in;
-          document.getElementById(`l-avail-${qid}`).textContent = d.available;
-          updateRowColor(row, d.queued_calls);
-          updateStatLabels('l-', qid);
-      }
-      handleTimer(qid, d.hold, d.queued_calls); updateGlobalSummary();
-      if (d.queued_calls === 0) { queueCallers[qid] = []; updateCallersList(qid); }
-      else if (queueCallers[qid] && queueCallers[qid].length > d.queued_calls) { queueCallers[qid] = queueCallers[qid].slice(0, d.queued_calls); updateCallersList(qid); }
-  }
-
-  function handleTimer(qid, startSeconds, count) {
-      if (timers[qid]) clearInterval(timers[qid]); let hold = startSeconds;
-      const render = (val) => {
-          const fmt = formatTime(val); const colorClass = getHoldColorClass(val);
-          const gh = document.getElementById(`hold-${qid}`); if(gh) { gh.textContent=fmt; gh.className=colorClass; }
-          const lh = document.getElementById(`l-hold-${qid}`); if(lh) { lh.textContent=fmt; lh.className=colorClass; }
-      };
-      render(hold);
-      if (count > 0) timers[qid] = setInterval(() => { hold++; render(hold); updateGlobalSummary(); }, 1000);
-  }
-
-  function updateCallersList(qid) {
-      const callers = queueCallers[qid] || [];
-      const generateHTML = (list) => {
-          if (!list.length) return '<div style="color:#999;font-style:italic;">No active callers</div>';
-          return list.map((c, i) => {
-              const acceptBtn = c.number ? `<span class="action-btn accept-btn" onclick="event.stopPropagation(); acceptCall('${c.number}')">📞</span>` : '';
-              const copyBtn = c.number ? `<span class="action-btn copy-btn" onclick="event.stopPropagation(); copyText('${c.number}', this)">📋</span>` : '';
-              return `<div class="caller-row"><span class="caller-index">${i + 1}.</span>${acceptBtn}<span class="caller-info">🌐 ${c.lang.toUpperCase()} — ${c.name}</span>${copyBtn}</div>`;
-          }).join('');
-      };
-      const gl = document.getElementById(`callers-${qid}`); if(gl) gl.innerHTML = generateHTML(callers.slice(0, 5));
-      const ll = document.getElementById(`l-callers-${qid}`); if(ll) ll.innerHTML = generateHTML(callers);
-  }
-
   function handleDragStart(e) { if (!isDragEnabled) { e.preventDefault(); return false; } dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', this.innerHTML); this.classList.add('dragging'); }
   function handleDragOver(e) { if (isDragEnabled) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } return false; }
   function handleDragEnter(e) { if(isDragEnabled) this.classList.add('over'); }
   function handleDragLeave(e) { this.classList.remove('over'); }
-  function handleDrop(e) { if (!isDragEnabled) return; if (e.stopPropagation) e.stopPropagation(); this.classList.remove('over');
-      if (dragSrcEl !== this) {
-          const srcId = dragSrcEl.id.replace('card-', ''); const targetId = this.id.replace('card-', '');
-          const list = loadVisibleQueues(); const from = list.indexOf(srcId); const to = list.indexOf(targetId);
-          if (from > -1 && to > -1) { list.splice(from, 1); list.splice(to, 0, srcId); saveVisibleQueues(list); renderAll(); }
-      } return false; }
+  function handleDrop(e) { if (!isDragEnabled) return; if (e.stopPropagation) e.stopPropagation(); this.classList.remove('over'); if (dragSrcEl !== this) { const srcId = dragSrcEl.id.replace('card-', ''); const targetId = this.id.replace('card-', ''); const list = loadVisibleQueues(); const from = list.indexOf(srcId); const to = list.indexOf(targetId); if (from > -1 && to > -1) { list.splice(from, 1); list.splice(to, 0, srcId); saveVisibleQueues(list); renderAll(); } } return false; }
   function handleDragEnd(e) { this.classList.remove('dragging'); this.classList.remove('over'); document.querySelectorAll('.card').forEach(c => { c.classList.remove('over'); c.classList.remove('dragging'); }); }
-  let dragSrcEl = null;
-
-  function connectWebSocket() {
-    statusEl.textContent = "🔄 Підключення...";
-    const socket = new WebSocket("wss://trackensure.gitstel.net/sw-monitor/?EIO=3&transport=websocket");
-    socket.onopen = () => { statusEl.textContent = "✅ З'єднання встановлено"; };
-    
-    socket.onmessage = (event) => {
-      const data = event.data;
-      if (data.startsWith('42')) {
-        try {
-          const payload = JSON.parse(data.slice(2));
-          const type = payload[0];
-          const d = payload[1];
-          if (type === 'queue_times') updateQueueData(d.queue, d);
-          if (type === 'queue_caller_join') {
-            const { queue, position } = d;
-            if (queue && position) {
-                const number = d.connectedlinenum || d.calleridnum || d.caller_number || "";
-                const rawName = d.connectedlinename || d.calleridname || d.caller_name || "";
-                const cleanName = detectName(rawName);
-                const lang = detectLanguage(rawName);
-                let displayText = "—";
-                if (number && cleanName) displayText = `${number} (${cleanName})`; else if (number) displayText = number; else if (cleanName) displayText = cleanName;
-                if (!queueCallers[queue]) queueCallers[queue] = [];
-                if (number) queueCallers[queue] = queueCallers[queue].filter(c => c.number !== number);
-                const idx = Math.max(Number(position) - 1, 0);
-                queueCallers[queue].splice(idx, 0, { name: displayText, number, lang });
-                updateCallersList(queue);
-            }
-          }
-          if (type === 'queue_caller_leave' || type === 'queue_caller_abandon') {
-             const { queue, position } = d;
-             if (queue && queueCallers[queue]) {
-                if (position) { const idx = Number(position) - 1; if (idx >= 0) queueCallers[queue].splice(idx, 1); }
-                else queueCallers[queue].shift();
-                updateCallersList(queue);
-             }
-          }
-        } catch (err) {}
-      }
-    };
-    socket.onclose = () => { statusEl.textContent = "🔌 З'єднання втрачено..."; setTimeout(connectWebSocket, 5000); };
-  }
-
-  // --- SETTINGS ---
   function openSettings() {
-    settingsForm.innerHTML = `
-      <div class="settings-group"><strong>Ваш Extension:</strong><input type="text" name="userExt" value="${getUserExt()}" placeholder="101"></div>
-      <div class="settings-group"><strong>Додати чергу:</strong><div class="add-queue-form"><input type="text" id="newQId" placeholder="ID (Q...)"><input type="text" id="newQName" placeholder="Name"><button type="button" onclick="handleAddClick()">Add</button></div></div>
-      <div class="settings-group"><strong>Видимі черги:</strong><div id="qList"></div></div>
-      <div class="settings-group"><strong>Theme:</strong> <label><input type="radio" name="theme" value="light" ${getTheme()==='light'?'checked':''}> Light</label> <label><input type="radio" name="theme" value="dark" ${getTheme()==='dark'?'checked':''}> Dark</label></div>
-    `;
+    settingsForm.innerHTML = `<div class="settings-group"><strong>Ваш Extension:</strong><input type="text" name="userExt" value="${getUserExt()}" placeholder="101"></div><div class="settings-group"><strong>Додати чергу:</strong><div class="add-queue-form"><input type="text" id="newQId" placeholder="ID (Q...)"><input type="text" id="newQName" placeholder="Name"><button type="button" onclick="handleAddClick()">Add</button></div></div><div class="settings-group"><strong>Видимі черги:</strong><div id="qList"></div></div><div class="settings-group"><strong>Theme:</strong> <label><input type="radio" name="theme" value="light" ${getTheme()==='light'?'checked':''}> Light</label> <label><input type="radio" name="theme" value="dark" ${getTheme()==='dark'?'checked':''}> Dark</label></div>`;
     const qList = document.getElementById('qList');
     const visible = loadVisibleQueues(); const custom = getCustomQueues();
     Object.entries(getAllQueues()).forEach(([qid, name]) => {
