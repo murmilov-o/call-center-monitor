@@ -4,10 +4,28 @@
   <meta charset="UTF-8">
   <title>Моніторинг черг</title>
   <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; padding-bottom: 90px; margin: 0; background: #f2f2f2; color: #000; transition: background 0.3s; }
-    body.dark { background: #1e1e1e; color: #ddd; }
+    /* --- GLOBAL RESET & UTILS --- */
+    * { box-sizing: border-box; } /* Исправляет проблему с шириной */
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      padding: 20px;
+      padding-bottom: 90px; /* Отступ под нижнюю панель */
+      margin: 0;
+      background: #f2f2f2;
+      color: #000;
+      transition: background 0.3s, color 0.3s;
+      overflow-x: hidden; /* Убирает горизонтальный скролл страницы */
+    }
+
+    body.dark {
+      background: #1e1e1e;
+      color: #ddd;
+    }
+
     .hidden { display: none !important; }
     
+    /* Colors & Thresholds */
     .text-normal { color: inherit; }
     .text-warn { color: #d35400; font-weight: bold; }
     .text-danger { color: #c0392b; font-weight: 900; animation: pulse 2s infinite; }
@@ -15,41 +33,86 @@
     body.dark .text-danger { color: #e74c3c; }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .btn { cursor: pointer; font-size: 16px; background: #fff; border: 1px solid #ccc; padding: 6px 12px; border-radius: 6px; }
+    /* Top Bar */
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
+    h1 { margin: 0; font-size: 24px; white-space: nowrap; }
+    #status { margin-bottom: 20px; font-size: 14px; color: #666; }
+    body.dark #status { color: #aaa; }
+
+    .controls { display: flex; gap: 8px; }
+    .btn {
+      cursor: pointer; font-size: 16px; background: #fff; border: 1px solid #ccc;
+      padding: 6px 12px; border-radius: 6px; transition: 0.2s; display: inline-flex;
+      align-items: center; justify-content: center;
+    }
+    .btn:hover { background-color: #e9e9e9; }
     .btn.active { background-color: #d4edda; border-color: #28a745; color: #155724; }
     body.dark .btn { background: #444; border-color: #666; color: #eee; }
-    body.dark .btn.active { background-color: #235d3a; color: #fff; }
-    .controls { display: flex; gap: 8px; }
+    body.dark .btn:hover { background-color: #555; }
+    body.dark .btn.active { background-color: #235d3a; border-color: #28a745; color: #fff; }
 
-    /* GRID */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
-    .card { background: white; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); min-height: 250px; display: flex; flex-direction: column; justify-content: space-between; transition: 0.3s; }
+    /* Grid */
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; width: 100%; }
+    .card {
+      background: white; border-radius: 12px; padding: 20px 22px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+      justify-content: space-between; transition: box-shadow 0.3s; min-height: 250px;
+    }
     body.dark .card { background: #2e2e2e; color: #eee; }
-    
-    /* LIST */
+    body.drag-enabled .card { cursor: grab; }
+    body.drag-enabled .card:active { cursor: grabbing; }
+    .card:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+    .card.dragging { opacity: 0.4; border: 2px dashed #999; }
+    .queue-name { font-weight: bold; font-size: 18px; margin-bottom: 4px; pointer-events: none; }
+    .queue-id { font-size: 13px; color: #565656; margin-bottom: 10px; pointer-events: none; }
+    body.dark .queue-id { color: #dcdcdc; }
+    .queue-count { font-size: 40px; font-weight: bold; margin-bottom: 10px; pointer-events: none; }
+    .local-stats-block { font-size: 11px; color: #666; margin-top: 5px; padding-top: 5px; border-top: 1px solid #eee; display: flex; justify-content: space-between; }
+    body.dark .local-stats-block { color: #aaa; border-color: #444; }
+
+    /* List */
     .list-container { width: 100%; overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     body.dark .list-container { background: #2e2e2e; }
     table { width: 100%; border-collapse: collapse; min-width: 800px; }
-    th { text-align: left; padding: 12px 15px; border-bottom: 2px solid #ddd; background: #f8f8f8; color: #555; font-size: 14px; }
-    body.dark th { background: #333; color: #aaa; border-color: #444; }
-    td { padding: 12px 15px; border-bottom: 1px solid #eee; }
+    th { text-align: left; padding: 12px 15px; border-bottom: 2px solid #ddd; font-size: 14px; color: #555; background-color: #f8f8f8; }
+    body.dark th { border-color: #444; color: #aaa; background-color: #333; }
+    td { padding: 12px 15px; border-bottom: 1px solid #eee; vertical-align: middle; font-size: 15px; }
     body.dark td { border-color: #444; }
-    .queue-row { cursor: pointer; transition: 0.1s; }
+    
+    .queue-row { cursor: pointer; transition: background 0.1s; }
     .queue-row:hover { background-color: #f0f0f0; }
     body.dark .queue-row:hover { background-color: #383838; }
     
-    .detail-row { display: none; }
+    .detail-row { display: none; background-color: #fafafa; }
+    body.dark .detail-row { background-color: #252525; }
     .detail-row.open { display: table-row; }
-    .toggle-icon { display: inline-block; width: 20px; transition: 0.2s; }
+    .detail-content { padding: 15px; max-height: 300px; overflow-y: auto; border-bottom: 1px solid #ddd; }
+    .toggle-icon { display: inline-block; width: 20px; transition: transform 0.2s; color: #888; }
     .queue-row.expanded .toggle-icon { transform: rotate(90deg); }
+    
+    .badge { padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 14px; }
+    .bg-low { background: #d4edda; color: #155724; }
+    .bg-med { background: #fff3cd; color: #5c4604; }
+    .bg-high { background: #f8d7da; color: #721c24; }
+    body.dark .bg-low { background: #235d3a; color: #ebffea; }
+    body.dark .bg-med { background: #665700; color: #fff3cd; }
+    body.dark .bg-high { background: #5b1f1f; color: #f8d7da; }
 
-    /* TOOLTIPS & STATS */
-    .local-stats-block { font-size: 11px; margin-top: 5px; padding-top: 5px; border-top: 1px solid #eee; display: flex; justify-content: space-between; }
-    body.dark .local-stats-block { border-color: #444; }
-    
+    /* Callers */
+    .callers-list { font-size: 14px; line-height: 1.6; flex-grow: 1; margin: 6px 0 8px 0; }
+    .caller-row { display: flex; align-items: center; margin-bottom: 5px; border-bottom: 1px dotted #eee; padding-bottom: 2px;}
+    body.dark .caller-row { border-color: #444; }
+    .caller-row:last-child { border-bottom: none; }
+    .caller-index { margin-right: 8px; font-weight: bold; color: #888; min-width: 20px; }
+    .caller-info { white-space: normal; overflow: visible; flex-grow: 1; margin: 0 5px; }
+    .action-btn { cursor: pointer; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; transition: 0.2s; font-size: 16px; }
+    .action-btn:hover { background-color: rgba(0,0,0,0.1); transform: scale(1.1); }
+    body.dark .action-btn:hover { background-color: rgba(255,255,255,0.1); }
+    .accept-btn { color: #28a745; margin-right: 4px; }
+    .copy-btn { opacity: 0.6; } .copy-btn:hover { opacity: 1; }
+
+    /* Tooltips */
     .stat-container { position: relative; display: inline-block; cursor: help; }
-    
     .stat-tooltip {
         visibility: hidden; width: 110px; background-color: rgba(0,0,0,0.9); color: #fff; text-align: left;
         border-radius: 6px; padding: 8px; position: absolute; z-index: 9999;
@@ -62,24 +125,13 @@
     }
     .stat-container:hover .stat-tooltip { visibility: visible; opacity: 1; }
 
-    /* UTILS */
-    .queue-name { font-weight: bold; font-size: 18px; margin-bottom: 4px; }
-    .queue-id { font-size: 13px; color: #565656; margin-bottom: 10px; }
-    body.dark .queue-id { color: #aaa; }
-    .queue-count { font-size: 40px; font-weight: bold; margin-bottom: 10px; }
-    .badge { padding: 4px 10px; border-radius: 6px; font-weight: bold; }
-    .bg-low { background: #d4edda; color: #155724; }
-    .bg-med { background: #fff3cd; color: #5c4604; }
-    .bg-high { background: #f8d7da; color: #721c24; }
-    body.dark .bg-low { background: #235d3a; color: #ebffea; }
-    body.dark .bg-med { background: #665700; color: #fff3cd; }
-    body.dark .bg-high { background: #5b1f1f; color: #f8d7da; }
-
     /* GLOBAL BAR */
     .global-stats {
-        position: fixed; bottom: 0; left: 0; width: 100%; background: #2c3e50; color: white;
+        position: fixed; bottom: 0; left: 0; right: 0; /* right:0 for full width */
+        background: #2c3e50; color: white;
         box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 2000; display: flex; justify-content: center;
         padding: 10px 0; gap: 30px; transition: transform 0.3s;
+        width: 100%;
     }
     body.dark .global-stats { background: #252525; border-top: 1px solid #444; }
     .global-stats.minimized { transform: translateY(100%); }
@@ -96,7 +148,7 @@
     .g-stat-sub { font-size: 11px; opacity: 0.8; }
     .top-count { color: #ff6b6b; font-weight: bold; margin-right: 5px; }
 
-    /* Modals */
+    /* Modals & Settings */
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 3000; }
     .modal-content { background: white; padding: 20px; border-radius: 12px; width: 360px; max-height: 85vh; overflow-y: auto; }
     body.dark .modal-content { background: #2b2b2b; color: #eee; }
@@ -105,14 +157,8 @@
     .add-queue-form { display: flex; gap: 5px; margin-top: 5px; }
     .delete-q-btn { background: none; border: none; color: #ff4444; cursor: pointer; }
     
-    /* Callers */
-    .caller-row { display: flex; align-items: center; margin-bottom: 5px; border-bottom: 1px dotted #eee; }
-    body.dark .caller-row { border-color: #444; }
-    .action-btn { cursor: pointer; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; margin: 0 2px; }
-    .accept-btn { color: #28a745; } .copy-btn { opacity: 0.6; } .copy-btn:hover { opacity: 1; }
-    
     /* Cheatsheet */
-    .cheatsheet { margin-top: 30px; padding: 20px; background: white; display: flex; gap: 40px; margin-bottom: 100px; border-radius: 12px;}
+    .cheatsheet { margin-top: 30px; padding: 20px; background: white; display: flex; gap: 40px; margin-bottom: 100px; border-radius: 12px; flex-wrap: wrap;}
     body.dark .cheatsheet { background: #2e2e2e; color: #eee; }
   </style>
 </head>
@@ -194,7 +240,7 @@
     <h2>Налаштування</h2>
     <form id="settingsForm"></form>
     <div class="modal-buttons">
-      <button type="button" class="cancel-btn" onclick="closeSettings()">Cancel</button>
+      <button type="button" class="cancel-btn" onclick="closeSettings()">Close</button>
       <button type="button" class="save-btn" onclick="saveSettings()">Save</button>
     </div>
   </div>
@@ -214,7 +260,7 @@
 </div>
 
 <script>
-  // 👇👇👇 CHECK YOUR LINK!
+  // 👇👇👇 ВАША ССЫЛКА С RENDER
   const API_URL = "https://queue-server-fbi5.onrender.com/stats"; 
 
   let currentView = localStorage.getItem('viewMode') || 'grid';
@@ -224,7 +270,6 @@
   const queuesData = {};   
   const timers = {};       
   
-  // New Structure: { daily: { queues: {} }, queuesPeriods: { Q700: {h1, h2} }, globalPeriods: {} }
   let fullStats = { daily: { queues: {} }, queuesPeriods: {}, globalPeriods: { h1:{}, h2:{}, h4:{} } };
 
   const statusEl = document.getElementById('status');
@@ -234,15 +279,13 @@
   const settingsForm = document.getElementById('settingsForm');
   const dragBtn = document.getElementById('dragBtn');
 
-  // Fetch Logic
+  // Fetch Stats
   async function fetchGlobalStats() {
       try {
           const res = await fetch(API_URL);
           if (res.ok) {
               fullStats = await res.json();
               updateGlobalSummary(); 
-              
-              // Force update UI for all queues
               const allQ = Object.keys(getAllQueues());
               allQ.forEach(qid => {
                   updateStatLabels('ls-', qid); // Grid
@@ -254,38 +297,25 @@
   setInterval(fetchGlobalStats, 10000);
   fetchGlobalStats();
 
-  // Helper to get stats
   function getQStats(qid) {
       if (!fullStats.daily.queues || !fullStats.daily.queues[qid]) return { ans: 0, abd: 0, sl_hits: 0 };
       return fullStats.daily.queues[qid];
   }
 
-  // --- UI UPDATERS ---
-
   // Generate Tooltip HTML
   function getTooltipHTML(type, qid) {
-      // type = 'ans' | 'abd' | 'sl'
-      // If qid is null, use globalPeriods
       const source = qid ? (fullStats.queuesPeriods[qid] || {}) : fullStats.globalPeriods;
-      
       const h1 = source.h1 || { ans: 0, abd: 0, sl: 0 };
       const h2 = source.h2 || { ans: 0, abd: 0, sl: 0 };
       const h4 = source.h4 || { ans: 0, abd: 0, sl: 0 };
-
       const val = (obj) => type === 'sl' ? obj[type] + '%' : obj[type];
-
-      return `
-        1h: <b>${val(h1)}</b><br>
-        2h: <b>${val(h2)}</b><br>
-        4h: <b>${val(h4)}</b>
-      `;
+      return `1h: <b>${val(h1)}</b><br>2h: <b>${val(h2)}</b><br>4h: <b>${val(h4)}</b>`;
   }
 
   function updateStatLabels(prefix, qid) {
       const stats = getQStats(qid);
       const slPercent = stats.ans > 0 ? Math.round((stats.sl_hits / stats.ans) * 100) : 0;
 
-      // Update Text
       const elAns = document.getElementById(`${prefix}ans-${qid}`);
       const elAbd = document.getElementById(`${prefix}abd-${qid}`);
       const elSl = document.getElementById(`${prefix}sl-${qid}`);
@@ -294,7 +324,6 @@
       if(elAbd) elAbd.textContent = stats.abd;
       if(elSl) elSl.textContent = slPercent + '%';
 
-      // Update Tooltips
       const tipAns = document.getElementById(`${prefix}tip-ans-${qid}`);
       const tipAbd = document.getElementById(`${prefix}tip-abd-${qid}`);
       const tipSl = document.getElementById(`${prefix}tip-sl-${qid}`);
@@ -304,8 +333,7 @@
       if(tipSl) tipSl.innerHTML = getTooltipHTML('sl', qid);
   }
 
-  // --- TEMPLATES ---
-
+  // UI Construction
   function createCard(qid, name, data) {
       const card = document.createElement('div');
       card.className = 'card'; card.id = `card-${qid}`; card.setAttribute('draggable', isDragEnabled);
@@ -375,7 +403,6 @@
   }
 
   function updateGlobalSummary() {
-      // 1. Realtime
       const allQueueIds = Object.keys(getAllQueues());
       let totalWaiting = 0; let maxHold = 0; let busyList = [];
       allQueueIds.forEach(qid => {
@@ -394,7 +421,6 @@
       mhEl.textContent = formatTime(maxHold);
       if(maxHold >= 600) mhEl.classList.add('alert'); else mhEl.classList.remove('alert');
 
-      // 2. Global Stats (Daily)
       let totalAns = 0; let totalAbd = 0; let totalSLHits = 0;
       if (fullStats.daily.queues) {
           Object.values(fullStats.daily.queues).forEach(s => {
@@ -406,12 +432,10 @@
       document.getElementById('gs-today-abd').textContent = totalAbd;
       document.getElementById('gs-today-sl').textContent = totalSlPercent + '%';
 
-      // 3. Global Stats Tooltips (Periods)
       document.getElementById('tip-g-ans').innerHTML = getTooltipHTML('ans', null);
       document.getElementById('tip-g-abd').innerHTML = getTooltipHTML('abd', null);
       document.getElementById('tip-g-sl').innerHTML = getTooltipHTML('sl', null);
 
-      // 4. Top 3 List
       const top3Container = document.getElementById('gs-top3');
       if (busyList.length === 0) {
           top3Container.innerHTML = '<div style="opacity:0.5; margin-top:5px;">— No Calls —</div>';
@@ -421,7 +445,7 @@
       }
   }
 
-  // --- BOILERPLATE (Standard Functions) ---
+  // --- STANDARD BOILERPLATE ---
   const defaultQueueNames = {
     Q700: "TrackEnsure Support", Q701: "TrackEnsure Support rus/ukr", Q801: "Callback rus/ukr", Q800: "Callback",
     Q791: "TrackEnsure New", Q750: "VIP Queue", Q702: "Fleet Supp", Q710: "Alfa Support",
@@ -447,34 +471,12 @@
   }
   function toggleDragMode() { isDragEnabled = !isDragEnabled; updateDragUI(); }
   function updateDragUI() { dragBtn.textContent = isDragEnabled ? "✋" : "🔒"; dragBtn.classList.toggle("active", isDragEnabled); document.body.classList.toggle("drag-enabled", isDragEnabled); document.querySelectorAll('.card').forEach(c => c.setAttribute('draggable', isDragEnabled)); }
-  
-  function toggleStatsBar() {
-      const bar = document.getElementById('statsBar'); const btn = document.getElementById('statsToggleIcon');
-      bar.classList.toggle('minimized');
-      if (bar.classList.contains('minimized')) { btn.textContent = '▲ Статистика'; localStorage.setItem('statsBarMinimized', 'true'); }
-      else { btn.textContent = '▼ Сховати'; localStorage.setItem('statsBarMinimized', 'false'); }
-  }
+  function toggleStatsBar() { const bar = document.getElementById('statsBar'); const btn = document.getElementById('statsToggleIcon'); bar.classList.toggle('minimized'); if (bar.classList.contains('minimized')) { btn.textContent = '▲ Статистика'; localStorage.setItem('statsBarMinimized', 'true'); } else { btn.textContent = '▼ Сховати'; localStorage.setItem('statsBarMinimized', 'false'); }}
   if (localStorage.getItem('statsBarMinimized') === 'true') { document.getElementById('statsBar').classList.add('minimized'); document.getElementById('statsToggleIcon').textContent = '▲ Статистика'; }
-
   function getHoldColorClass(seconds) { if (seconds >= 600) return 'text-danger'; if (seconds >= 300) return 'text-warn'; return 'text-normal'; }
-  function renderAll() {
-      const visibleQueues = loadVisibleQueues(); const allQueues = getAllQueues();
-      gridEl.innerHTML = ''; listBody.innerHTML = '';
-      visibleQueues.forEach(qid => {
-          const name = allQueues[qid] || qid;
-          const data = queuesData[qid] || { queued_calls: 0, logged_in: "-", available: "-", hold: 0 };
-          gridEl.appendChild(createCard(qid, name, data));
-          const { mainRow, detailRow } = createListRow(qid, name, data);
-          listBody.appendChild(mainRow); listBody.appendChild(detailRow);
-          updateCallersList(qid);
-      });
-      updateGlobalSummary();
-  }
-  
   function toggleRow(qid) { const row = document.getElementById(`row-${qid}`); const detail = document.getElementById(`detail-${qid}`); if(row && detail) { row.classList.toggle('expanded'); detail.classList.toggle('open'); }}
   function updateColorClass(el, count) { el.classList.remove('queue-low', 'queue-medium', 'queue-high'); const num = Number(count); if (num >= 5) el.classList.add('queue-high'); else if (num >= 3) el.classList.add('queue-medium'); else if (num >= 1) el.classList.add('queue-low'); }
   function updateRowColor(row, count) { const badge = row.querySelector('.badge'); if(badge) { badge.className = 'badge'; const num = Number(count); if (num >= 5) badge.classList.add('bg-high'); else if (num >= 3) badge.classList.add('bg-med'); else if (num >= 1) badge.classList.add('bg-low'); } }
-  
   function copyText(text, btnElement) { if (!text) return; navigator.clipboard.writeText(text).then(() => { const original = btnElement.textContent; btnElement.textContent = "✅"; setTimeout(() => btnElement.textContent = original, 1500); }); }
   function acceptCall(callerNumber) { if (!callerNumber) return; const userExt = getUserExt(); if (!userExt) { alert("Extension required!"); openSettings(); return; } window.postMessage({ type: "CONNECT_CALL", userExtension: userExt, targetNumber: callerNumber, source: "queue_monitor" }, "*"); }
 
@@ -527,21 +529,6 @@
       const ll = document.getElementById(`l-callers-${qid}`); if(ll) ll.innerHTML = generateHTML(callers);
   }
 
-  // --- DRAG ---
-  let dragSrcEl = null;
-  function handleDragStart(e) { if (!isDragEnabled) { e.preventDefault(); return false; } dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', this.innerHTML); this.classList.add('dragging'); }
-  function handleDragOver(e) { if (isDragEnabled) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } return false; }
-  function handleDragEnter(e) { if(isDragEnabled) this.classList.add('over'); }
-  function handleDragLeave(e) { this.classList.remove('over'); }
-  function handleDrop(e) { if (!isDragEnabled) return; if (e.stopPropagation) e.stopPropagation(); this.classList.remove('over');
-      if (dragSrcEl !== this) {
-          const srcId = dragSrcEl.id.replace('card-', ''); const targetId = this.id.replace('card-', '');
-          const list = loadVisibleQueues(); const from = list.indexOf(srcId); const to = list.indexOf(targetId);
-          if (from > -1 && to > -1) { list.splice(from, 1); list.splice(to, 0, srcId); saveVisibleQueues(list); renderAll(); }
-      } return false; }
-  function handleDragEnd(e) { this.classList.remove('dragging'); this.classList.remove('over'); document.querySelectorAll('.card').forEach(c => { c.classList.remove('over'); c.classList.remove('dragging'); }); }
-
-  // --- WEBSOCKET ---
   function connectWebSocket() {
     statusEl.textContent = "🔄 Підключення...";
     const socket = new WebSocket("wss://trackensure.gitstel.net/sw-monitor/?EIO=3&transport=websocket");
