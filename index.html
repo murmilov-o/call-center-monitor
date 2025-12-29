@@ -21,7 +21,7 @@
 
     .hidden { display: none !important; }
     
-    /* Colors & Thresholds */
+    /* Colors */
     .text-normal { color: inherit; }
     .text-warn { color: #d35400; font-weight: bold; }
     .text-danger { color: #c0392b; font-weight: 900; animation: pulse 2s infinite; }
@@ -104,44 +104,75 @@
     .accept-btn { color: #28a745; margin-right: 4px; }
     .copy-btn { opacity: 0.6; } .copy-btn:hover { opacity: 1; }
 
+    /* --- TOOLTIPS --- */
+    /* Контейнер для цифры со статистикой */
+    .stat-container {
+        position: relative;
+        display: inline-block;
+        cursor: help; /* Курсор вопросика */
+    }
+
+    /* Само всплывающее окошко */
+    .stat-tooltip {
+        visibility: hidden;
+        width: 120px;
+        background-color: rgba(0, 0, 0, 0.9);
+        color: #fff;
+        text-align: left;
+        border-radius: 6px;
+        padding: 8px;
+        position: absolute;
+        z-index: 9999; /* Самый верхний слой */
+        bottom: 125%; /* Показываем над элементом */
+        left: 50%;
+        margin-left: -60px; /* Центрируем */
+        opacity: 0;
+        transition: opacity 0.3s;
+        font-size: 11px;
+        line-height: 1.4;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        pointer-events: none;
+    }
+
+    /* Стрелочка вниз */
+    .stat-tooltip::after {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: rgba(0,0,0,0.9) transparent transparent transparent;
+    }
+
+    /* Показываем при наведении */
+    .stat-container:hover .stat-tooltip {
+        visibility: visible;
+        opacity: 1;
+    }
+
     /* --- GLOBAL SUMMARY BAR --- */
     .global-stats {
-        position: fixed;
-        bottom: 0; left: 0; width: 100%;
+        position: fixed; bottom: 0; left: 0; width: 100%;
         background: #2c3e50; color: white;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.2);
-        z-index: 2000; /* Lower than modal */
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 2000;
         display: flex; justify-content: center; align-items: flex-start;
         padding: 10px 0; font-size: 14px; gap: 30px;
         min-height: 70px;
         transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
     }
-    
     body.dark .global-stats { background: #252525; border-top: 1px solid #444; }
-    
-    /* Class to hide the bar */
-    .global-stats.minimized {
-        transform: translateY(100%);
-    }
-
-    /* Toggle Tab Button */
+    .global-stats.minimized { transform: translateY(100%); }
     .stats-toggle-tab {
-        position: absolute;
-        top: -24px; /* Sticks out the top */
-        right: 20px;
-        background: #2c3e50;
-        color: white;
-        padding: 2px 15px;
-        border-top-left-radius: 8px;
-        border-top-right-radius: 8px;
-        cursor: pointer;
-        font-size: 12px;
-        box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
-        z-index: 2001;
-        user-select: none;
+        position: absolute; top: -24px; right: 20px;
+        background: #2c3e50; color: white; padding: 2px 15px;
+        border-top-left-radius: 8px; border-top-right-radius: 8px;
+        cursor: pointer; font-size: 12px; box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+        z-index: 2001; user-select: none;
     }
     body.dark .stats-toggle-tab { background: #252525; border: 1px solid #444; border-bottom: none; }
-
+    
     .g-stat-item { text-align: center; min-width: 100px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 20px;}
     .g-stat-item:last-child { border: none; }
     .g-stat-label { font-size: 10px; opacity: 0.7; display: block; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -152,13 +183,8 @@
     .top-item { margin-bottom: 2px; white-space: nowrap; }
     .top-count { color: #ff6b6b; font-weight: bold; margin-right: 5px; min-width: 15px; display: inline-block; text-align: right;}
 
-    /* --- Modals & Settings (Z-INDEX FIXED) --- */
-    .modal {
-      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.4);
-      display: none; justify-content: center; align-items: center;
-      z-index: 3000; /* !!! Higher than global-stats (2000) !!! */
-    }
+    /* Modals & Settings */
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 3000; }
     .modal-content { background: white; padding: 20px; border-radius: 12px; width: 360px; max-height: 85vh; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.2); }
     body.dark .modal-content { background: #2b2b2b; color: #eee; }
     .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
@@ -205,9 +231,10 @@
     <thead>
       <tr>
         <th style="width: 30%">Queue Name</th>
-        <th style="width: 15%">Waiting</th>
+        <th style="width: 15%">Max Wait</th>
+        <th style="width: 10%">Wait #</th>
         <th style="width: 20%">Agents</th>
-        <th style="width: 35%">Daily Stats (Total)</th>
+        <th style="width: 25%">Daily Stats</th>
       </tr>
     </thead>
     <tbody id="listBody"></tbody>
@@ -215,22 +242,18 @@
 </div>
 
 <div class="global-stats" id="statsBar">
-    <div class="stats-toggle-tab" onclick="toggleStatsBar()" id="statsToggleIcon">
-        ▼ Сховати
-    </div>
-
+    <div class="stats-toggle-tab" onclick="toggleStatsBar()" id="statsToggleIcon">▼ Сховати</div>
+    
     <div class="g-stat-item">
         <span class="g-stat-label">Total Waiting</span>
         <span class="g-stat-value" id="gs-waiting">0</span>
     </div>
-    
     <div class="g-stat-item">
         <span class="g-stat-label">🔥 Top 3 Busy</span>
         <div id="gs-top3" class="top-list">
             <div style="opacity:0.5; font-size:12px; margin-top:5px;">— No Calls —</div>
         </div>
     </div>
-
     <div class="g-stat-item">
         <span class="g-stat-label">Max Wait</span>
         <span class="g-stat-value" id="gs-max-hold">00:00</span>
@@ -239,18 +262,31 @@
     <div class="g-stat-item" style="min-width: 180px;">
         <span class="g-stat-label">Daily Stats (Server)</span>
         <div style="display: flex; justify-content: space-around;">
-            <div>
+            
+            <div class="stat-container">
                 <div class="g-stat-value" id="gs-today-ans" style="color: #2ecc71;">0</div>
                 <div class="g-stat-sub">Ans</div>
+                <div class="stat-tooltip" id="tip-ans">
+                    Завантаження...
+                </div>
             </div>
-            <div>
+
+            <div class="stat-container">
                 <div class="g-stat-value" id="gs-today-abd" style="color: #e74c3c;">0</div>
                 <div class="g-stat-sub">Abd</div>
+                <div class="stat-tooltip" id="tip-abd">
+                    Завантаження...
+                </div>
             </div>
-            <div>
+
+            <div class="stat-container">
                 <div class="g-stat-value" id="gs-today-sl">0%</div>
                 <div class="g-stat-sub">SL</div>
+                <div class="stat-tooltip" id="tip-sl">
+                    Завантаження...
+                </div>
             </div>
+
         </div>
     </div>
 </div>
@@ -297,7 +333,7 @@
 </div>
 
 <script>
-  // 👇👇👇 ВАША ССЫЛКА (Уже стоит с прошлого раза, но проверьте)
+  // 👇👇👇 ВАША ССЫЛКА С RENDER
   const API_URL = "https://queue-server-fbi5.onrender.com/stats"; 
 
   let currentView = localStorage.getItem('viewMode') || 'grid';
@@ -306,7 +342,9 @@
   const queueCallers = {}; 
   const queuesData = {};   
   const timers = {};       
-  let dailyStats = { queues: {} };
+  
+  // Здесь храним полные данные (включая периоды)
+  let fullStats = { daily: { queues: {} }, periods: {} };
 
   const statusEl = document.getElementById('status');
   const gridEl = document.getElementById('queuesGrid');
@@ -321,7 +359,6 @@
       const bar = document.getElementById('statsBar');
       const btn = document.getElementById('statsToggleIcon');
       bar.classList.toggle('minimized');
-      
       if (bar.classList.contains('minimized')) {
           btn.textContent = '▲ Статистика';
           localStorage.setItem('statsBarMinimized', 'true');
@@ -330,13 +367,9 @@
           localStorage.setItem('statsBarMinimized', 'false');
       }
   }
-
-  // Restore toggle state on load
   if (localStorage.getItem('statsBarMinimized') === 'true') {
-      const bar = document.getElementById('statsBar');
-      const btn = document.getElementById('statsToggleIcon');
-      bar.classList.add('minimized');
-      btn.textContent = '▲ Статистика';
+      document.getElementById('statsBar').classList.add('minimized');
+      document.getElementById('statsToggleIcon').textContent = '▲ Статистика';
   }
 
   // --- FETCH STATS ---
@@ -344,9 +377,11 @@
       try {
           const res = await fetch(API_URL);
           if (res.ok) {
-              dailyStats = await res.json();
+              fullStats = await res.json(); // Получаем и daily, и periods
               updateGlobalSummary(); 
-              Object.keys(dailyStats.queues).forEach(qid => {
+              
+              // Обновляем карточки и список (общую стату за день)
+              Object.keys(fullStats.daily.queues).forEach(qid => {
                   updateStatLabels('ls-', qid);
                   updateStatLabels('l-', qid);
               });
@@ -357,10 +392,11 @@
   fetchGlobalStats();
 
   function getQStats(qid) {
-      if (!dailyStats.queues || !dailyStats.queues[qid]) return { ans: 0, abd: 0, sl_hits: 0 };
-      return dailyStats.queues[qid];
+      if (!fullStats.daily.queues || !fullStats.daily.queues[qid]) return { ans: 0, abd: 0, sl_hits: 0 };
+      return fullStats.daily.queues[qid];
   }
 
+  // ... (Константы и переводы те же, для краткости не дублирую)
   const defaultQueueNames = {
     Q700: "TrackEnsure Support", Q701: "TrackEnsure Support rus/ukr", Q801: "Callback rus/ukr", Q800: "Callback",
     Q791: "TrackEnsure New", Q750: "VIP Queue", Q702: "Fleet Supp", Q710: "Alfa Support",
@@ -368,7 +404,6 @@
     Q760: "Swift VIP", Q766: "Sharp Support", Q745: "Club Support", Q781: "Pro-TracKing Support",
     Q730: "Smart eLog Support", Q777: "KGZ"
   };
-
   const translations = {
     ua: { title: "📞 Активні черги", connecting: "🔄 Підключення...", connected: "✅ З'єднання встановлено", lost: "🔌 З'єднання втрачено...", settings: "Налаштування", visibleQueues: "Видимі черги:", addQueue: "Додати чергу:", add: "Додати", save: "Зберегти", cancel: "Скасувати", accept: "Прийняти", copied: "Скопійовано!", userExt: "Ваш Extension:", userExtPh: "напр. 101" },
     ru: { title: "📞 Активные очереди", connecting: "🔄 Подключение...", connected: "✅ Соединение установлено", lost: "🔌 Соединение потеряно...", settings: "Настройки", visibleQueues: "Видимые очереди:", addQueue: "Добавить очередь:", add: "Добавить", save: "Сохранить", cancel: "Отмена", accept: "Принять", copied: "Скопировано!", userExt: "Ваш внутренний номер (Extension):", userExtPh: "напр. 101" },
@@ -466,10 +501,10 @@
         <td><span id="l-hold-${qid}" class="${holdClass}" style="font-weight:bold;">${formatTime(data.hold)}</span></td>
         <td><span class="badge" id="l-badge-${qid}">${data.queued_calls}</span></td>
         <td><span id="l-logged-${qid}">${data.logged_in}</span> / <span id="l-avail-${qid}">${data.available}</span></td>
-        <td style="font-size:13px; color:#555;">
+        <td style="font-size:13px; color:#555; white-space: nowrap;">
             SL: <span id="l-sl-${qid}" style="font-weight:bold">0%</span> | 
-            Abd: <span id="l-abd-${qid}" style="color:#c0392b">0</span> | 
-            Ans: <span id="l-ans-${qid}" style="color:#27ae60">0</span>
+            Abd: <span id="l-abd-${qid}" style="color:#c0392b; font-weight:bold;">0</span> | 
+            Ans: <span id="l-ans-${qid}" style="color:#27ae60; font-weight:bold;">0</span>
         </td>
       `;
       const detailTr = document.createElement('tr'); detailTr.className = 'detail-row'; detailTr.id = `detail-${qid}`;
@@ -506,6 +541,7 @@
   }
 
   function updateGlobalSummary() {
+      // 1. Realtime (Waiting & Top 3)
       const allQueueIds = Object.keys(getAllQueues());
       let totalWaiting = 0; let maxHold = 0; let busyList = [];
       allQueueIds.forEach(qid => {
@@ -524,9 +560,10 @@
       mhEl.textContent = formatTime(maxHold);
       if(maxHold >= 600) mhEl.classList.add('alert'); else mhEl.classList.remove('alert');
 
+      // 2. Cumulative (Daily Stats)
       let totalAns = 0; let totalAbd = 0; let totalSLHits = 0;
-      if (dailyStats.queues) {
-          Object.values(dailyStats.queues).forEach(s => {
+      if (fullStats.daily.queues) {
+          Object.values(fullStats.daily.queues).forEach(s => {
               totalAns += s.ans; totalAbd += s.abd; totalSLHits += s.sl_hits;
           });
       }
@@ -535,6 +572,7 @@
       document.getElementById('gs-today-abd').textContent = totalAbd;
       document.getElementById('gs-today-sl').textContent = totalSlPercent + '%';
 
+      // 3. Top 3 List
       const top3Container = document.getElementById('gs-top3');
       if (busyList.length === 0) {
           top3Container.innerHTML = '<div style="opacity:0.5; font-size:12px; margin-top:5px;">— No Calls —</div>';
@@ -542,8 +580,31 @@
           busyList.sort((a, b) => b.count - a.count);
           top3Container.innerHTML = busyList.slice(0, 3).map(item => `<div class="top-item"><span class="top-count">${item.count}</span><span>${item.name}</span></div>`).join('');
       }
+
+      // 4. UPDATE TOOLTIPS (Populating with period data)
+      if (fullStats.periods) {
+          const p = fullStats.periods;
+          
+          const formatTip = (type) => {
+              return `
+                1h: <b>${p.h1[type]}</b><br>
+                2h: <b>${p.h2[type]}</b><br>
+                4h: <b>${p.h4[type]}</b>
+              `;
+          }
+          
+          document.getElementById('tip-ans').innerHTML = formatTip('ans');
+          document.getElementById('tip-abd').innerHTML = formatTip('abd');
+          
+          document.getElementById('tip-sl').innerHTML = `
+                1h: <b>${p.h1.sl}%</b><br>
+                2h: <b>${p.h2.sl}%</b><br>
+                4h: <b>${p.h4.sl}%</b>
+          `;
+      }
   }
 
+  // ... (Копирование, Звонок, Обновление по сокету - без изменений)
   function copyText(text, btnElement) {
       if (!text) return; navigator.clipboard.writeText(text).then(() => { const original = btnElement.textContent; btnElement.textContent = "✅"; setTimeout(() => btnElement.textContent = original, 1500); });
   }
