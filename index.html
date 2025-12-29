@@ -279,23 +279,74 @@
   const settingsForm = document.getElementById('settingsForm');
   const dragBtn = document.getElementById('dragBtn');
 
-  // Fetch Stats
+// --- FETCH STATS ---
   async function fetchGlobalStats() {
       try {
           const res = await fetch(API_URL);
           if (res.ok) {
-              fullStats = await res.json();
+              const data = await res.json();
+              fullStats = data;
+              
+              // 1. Обновляем общую статистику
               updateGlobalSummary(); 
-              const allQ = Object.keys(getAllQueues());
-              allQ.forEach(qid => {
-                  updateStatLabels('ls-', qid); // Grid
-                  updateStatLabels('l-', qid);  // List
+              
+              // 2. Обновляем цифры в карточках (Ans/Abd/SL)
+              Object.keys(fullStats.daily.queues).forEach(qid => {
+                  updateStatLabels('ls-', qid);
+                  updateStatLabels('l-', qid);
               });
+
+              // 3. НОВОЕ: Обновляем список звонящих (восстанавливаем после F5)
+              if (data.activeCallers) {
+                  Object.keys(data.activeCallers).forEach(qid => {
+                      const serverList = data.activeCallers[qid] || [];
+                      
+                      // Превращаем данные сервера в формат для нашего UI
+                      // Сервер: { number, name, joinTime }
+                      // UI ожидает: { number, name, lang } (lang парсим тут)
+                      
+                      const uiList = serverList.map(c => {
+                          const rawName = c.name;
+                          const lang = detectLanguage(rawName);
+                          const cleanName = detectName(rawName);
+                          
+                          let displayText = "—";
+                          if (c.number && cleanName) displayText = `${c.number} (${cleanName})`;
+                          else if (c.number) displayText = c.number;
+                          else if (cleanName) displayText = cleanName;
+
+                          return { number: c.number, name: displayText, lang: lang };
+                      });
+
+                      // Сохраняем и рисуем
+                      queueCallers[qid] = uiList;
+                      updateCallersList(qid);
+                  });
+              }
           }
-      } catch (e) { console.warn("Stats fetch failed", e); }
+      } catch (e) { console.warn("Failed to fetch stats:", e); }
   }
-  setInterval(fetchGlobalStats, 10000);
+  // Запускаем сразу и потом каждые 5 сек (чтобы список звонящих был свежим у всех)
+  setInterval(fetchGlobalStats, 5000); 
   fetchGlobalStats();
+
+  // ... (ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ) ...
+  // Убедитесь, что функции-хелперы ниже существуют в вашем коде (они там были):
+  
+  function detectLanguage(name) { 
+      if (!name) return "?";
+      const u = name.toUpperCase(); 
+      if (u.includes("UKR")) return "ukr"; 
+      if (u.includes("RU")) return "ru"; 
+      if (u.includes("EN")) return "en"; 
+      return "?"; 
+  }
+  
+  function detectName(raw) { 
+      if (!raw) return "";
+      const idx = raw.lastIndexOf(":"); 
+      return idx === -1 ? raw : raw.slice(idx + 1).trim(); 
+  }
 
   function getQStats(qid) {
       if (!fullStats.daily.queues || !fullStats.daily.queues[qid]) return { ans: 0, abd: 0, sl_hits: 0 };
