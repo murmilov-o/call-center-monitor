@@ -276,10 +276,10 @@
 </div>
 
 <script>
-  // 👇👇👇 ВАША ССЫЛКА С RENDER
+// 👇👇👇 ВАША ССЫЛКА С RENDER
   const API_URL = "https://queue-server-fbi5.onrender.com/stats"; 
 
-  // --- 1. CONSTANTS (MOVED TO TOP) ---
+  // --- 1. CONSTANTS ---
   const defaultQueueNames = {
     Q700: "TrackEnsure Support", Q701: "TrackEnsure Support rus/ukr", Q801: "Callback rus/ukr", Q800: "Callback",
     Q791: "TrackEnsure New", Q750: "VIP Queue", Q702: "Fleet Supp", Q710: "Alfa Support",
@@ -302,7 +302,6 @@
   const queuesData = {};   
   const timers = {};       
   
-  // Full stats from server
   let fullStats = { daily: { queues: {} }, queuesPeriods: {}, globalPeriods: { h1:{}, h2:{}, h4:{} } };
 
   // --- 3. DOM ELEMENTS ---
@@ -342,15 +341,36 @@
   }
 
   // --- 5. LOGIC: FETCH ---
-  async function fetchGlobalStats() {
+  
+  // А) Загружаем статистику (цифры) - регулярно
+  async function fetchStatsOnly() {
       try {
           const res = await fetch(API_URL);
           if (res.ok) {
               const data = await res.json();
-              fullStats = data;
-              updateGlobalSummary(); 
+              fullStats = data; // Обновляем глобальную переменную статистики
               
-              // Restore Callers from Server (Persistence fix)
+              updateGlobalSummary(); // Обновляем нижнюю панель
+              
+              // Обновляем цифры в карточках
+              const allQ = Object.keys(getAllQueues());
+              allQ.forEach(qid => {
+                  updateStatLabels('ls-', qid); 
+                  updateStatLabels('l-', qid);
+              });
+          }
+      } catch (e) { console.warn("Stats fetch failed", e); }
+  }
+
+  // Б) Загружаем список звонящих - ТОЛЬКО ОДИН РАЗ (при старте)
+  async function fetchInitialState() {
+      try {
+          const res = await fetch(API_URL);
+          if (res.ok) {
+              const data = await res.json();
+              fullStats = data; // Сохраняем стату
+              
+              // Восстанавливаем звонящих
               if (data.activeCallers) {
                   Object.keys(data.activeCallers).forEach(qid => {
                       const serverList = data.activeCallers[qid] || [];
@@ -368,19 +388,16 @@
                       updateCallersList(qid);
                   });
               }
-
-              // Refresh UI numbers
-              const allQ = Object.keys(getAllQueues());
-              allQ.forEach(qid => {
-                  updateStatLabels('ls-', qid); 
-                  updateStatLabels('l-', qid);
-              });
+              // Сразу обновляем интерфейс
+              updateGlobalSummary();
+              renderAll();
           }
-      } catch (e) { console.warn("Stats fetch failed", e); }
+      } catch (e) { console.warn("Initial fetch failed", e); }
   }
-  // Start polling
-  setInterval(fetchGlobalStats, 5000); 
-  fetchGlobalStats(); // Initial call
+
+  // Запуск:
+  fetchInitialState(); // 1 раз загружаем список людей
+  setInterval(fetchStatsOnly, 10000); // Каждые 10 сек обновляем только цифры статистики
 
   // --- 6. UI LOGIC ---
   function getTooltipHTML(type, qid) {
