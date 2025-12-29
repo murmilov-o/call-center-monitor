@@ -5,6 +5,7 @@
   <title>Моніторинг черг</title>
   
   <link rel="icon" type="image/png" href="favicon.png">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📞</text></svg>">
 
   <style>
     /* --- 1. GLOBAL RESET --- */
@@ -18,7 +19,7 @@
       background: #f2f2f2;
       color: #000;
       transition: background 0.3s, color 0.3s;
-      overflow-x: hidden; /* Убирает горизонтальный скролл */
+      overflow-x: hidden;
     }
 
     body.dark { background: #1e1e1e; color: #ddd; }
@@ -47,8 +48,6 @@
     .btn.active { background-color: #d4edda; border-color: #28a745; color: #155724; }
     .btn.primary { background-color: #007bff; color: white; border-color: #007bff; }
     .btn.primary:hover { background-color: #0069d9; }
-    .btn.danger { background-color: #dc3545; color: white; border-color: #dc3545; }
-    .btn.danger:hover { background-color: #c82333; }
     
     body.dark .btn { background: #444; border-color: #666; color: #eee; }
     body.dark .btn:hover { background-color: #555; }
@@ -136,17 +135,18 @@
     .stat-tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: rgba(0,0,0,0.9) transparent transparent transparent; }
     .stat-container:hover .stat-tooltip { visibility: visible; opacity: 1; }
 
-    /* GLOBAL BAR */
+    /* GLOBAL BAR (FIXED LAYOUT) */
     .global-stats {
         position: fixed; bottom: 0; left: 0; right: 0;
         background: #2c3e50; color: white;
         box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 2000;
-        display: flex; justify-content: center; align-items: flex-start;
+        display: flex; justify-content: center; align-items: center; /* Центрирование */
         padding: 10px 0; font-size: 14px; gap: 30px;
         min-height: 70px; transition: 0.3s;
     }
     body.dark .global-stats { background: #252525; border-top: 1px solid #444; }
     .global-stats.minimized { transform: translateY(100%); }
+    
     .stats-toggle-tab {
         position: absolute; top: -24px; right: 20px;
         background: #2c3e50; color: white; padding: 2px 15px;
@@ -154,10 +154,24 @@
     }
     body.dark .stats-toggle-tab { background: #252525; border: 1px solid #444; border-bottom: none; }
     
-    .g-stat-item { text-align: center; min-width: 100px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 20px; }
+    .g-stat-item { 
+        text-align: center; min-width: 100px; 
+        border-right: 1px solid rgba(255,255,255,0.1); padding-right: 20px; 
+        display: flex; flex-direction: column; justify-content: center; /* Исправление наложения */
+    }
     .g-stat-item:last-child { border: none; }
-    .g-stat-value { font-size: 20px; font-weight: bold; }
-    .g-stat-label { font-size: 10px; opacity: 0.7; text-transform: uppercase; margin-bottom: 3px; }
+    
+    .g-stat-label { 
+        display: block; /* Важно: чтобы текст был на отдельной строке */
+        font-size: 10px; opacity: 0.7; text-transform: uppercase; 
+        margin-bottom: 5px; /* Отступ от цифры */
+    }
+    
+    .g-stat-value { 
+        display: block; 
+        font-size: 20px; font-weight: bold; line-height: 1; 
+    }
+    
     .g-stat-sub { font-size: 11px; opacity: 0.8; margin-top: 2px; }
     .top-list { font-size: 12px; text-align: left; display: inline-block; }
     .top-count { color: #ff6b6b; font-weight: bold; margin-right: 5px; }
@@ -244,7 +258,7 @@
     
     <div class="g-stat-item">
         <span class="g-stat-label">🔥 Top 3 Busy</span>
-        <div id="gs-top3" style="font-size:12px; text-align:left;">
+        <div id="gs-top3" class="top-list">
             <div style="opacity:0.5; margin-top:5px;">— No Calls —</div>
         </div>
     </div>
@@ -318,7 +332,7 @@
 </div>
 
 <script>
-  // 👇👇👇 ВАША ССЫЛКА С RENDER (Проверьте, что в конце есть /stats)
+  // 👇👇👇 ВАША ССЫЛКА С RENDER (В конце должно быть /stats)
   const API_URL = "https://queue-server-fbi5.onrender.com/stats"; 
 
   // --- 1. CONSTANTS ---
@@ -659,13 +673,16 @@
           if (type === 'queue_times') updateQueueData(d.queue, d);
           if (type === 'queue_caller_join') {
             const { queue, position } = d;
+            
+            // Aggressive number finding
+            const number = d.connectedlinenum || d.calleridnum || d.caller_number || "";
+            const rawName = d.connectedlinename || d.calleridname || d.caller_name || "";
+            const cleanName = detectName(rawName);
+            const lang = detectLanguage(rawName);
+            let displayText = "—";
+            if (number && cleanName) displayText = `${number} (${cleanName})`; else if (number) displayText = number; else if (cleanName) displayText = cleanName;
+            
             if (queue && position) {
-                const number = d.connectedlinenum || d.calleridnum || d.caller_number || "";
-                const rawName = d.connectedlinename || d.calleridname || d.caller_name || "";
-                const cleanName = detectName(rawName);
-                const lang = detectLanguage(rawName);
-                let displayText = "—";
-                if (number && cleanName) displayText = `${number} (${cleanName})`; else if (number) displayText = number; else if (cleanName) displayText = cleanName;
                 if (!queueCallers[queue]) queueCallers[queue] = [];
                 if (number) queueCallers[queue] = queueCallers[queue].filter(c => c.number !== number);
                 const idx = Math.max(Number(position) - 1, 0);
