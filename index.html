@@ -4,28 +4,24 @@
   <meta charset="UTF-8">
   <title>Моніторинг черг</title>
   <style>
-    /* --- GLOBAL RESET & UTILS --- */
-    * { box-sizing: border-box; } /* Исправляет проблему с шириной */
+    /* --- GLOBAL RESET --- */
+    * { box-sizing: border-box; }
     
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       padding: 20px;
-      padding-bottom: 90px; /* Отступ под нижнюю панель */
+      padding-bottom: 90px;
       margin: 0;
       background: #f2f2f2;
       color: #000;
       transition: background 0.3s, color 0.3s;
-      overflow-x: hidden; /* Убирает горизонтальный скролл страницы */
+      overflow-x: hidden; /* Fix horizontal scroll */
     }
 
-    body.dark {
-      background: #1e1e1e;
-      color: #ddd;
-    }
-
+    body.dark { background: #1e1e1e; color: #ddd; }
     .hidden { display: none !important; }
     
-    /* Colors & Thresholds */
+    /* COLORS */
     .text-normal { color: inherit; }
     .text-warn { color: #d35400; font-weight: bold; }
     .text-danger { color: #c0392b; font-weight: 900; animation: pulse 2s infinite; }
@@ -33,7 +29,7 @@
     body.dark .text-danger { color: #e74c3c; }
     @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.7; } 100% { opacity: 1; } }
 
-    /* Top Bar */
+    /* LAYOUT */
     .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
     h1 { margin: 0; font-size: 24px; white-space: nowrap; }
     #status { margin-bottom: 20px; font-size: 14px; color: #666; }
@@ -51,7 +47,7 @@
     body.dark .btn:hover { background-color: #555; }
     body.dark .btn.active { background-color: #235d3a; border-color: #28a745; color: #fff; }
 
-    /* Grid */
+    /* GRID VIEW */
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; width: 100%; }
     .card {
       background: white; border-radius: 12px; padding: 20px 22px;
@@ -63,14 +59,20 @@
     body.drag-enabled .card:active { cursor: grabbing; }
     .card:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
     .card.dragging { opacity: 0.4; border: 2px dashed #999; }
+    
     .queue-name { font-weight: bold; font-size: 18px; margin-bottom: 4px; pointer-events: none; }
     .queue-id { font-size: 13px; color: #565656; margin-bottom: 10px; pointer-events: none; }
-    body.dark .queue-id { color: #dcdcdc; }
+    body.dark .queue-id { color: #aaa; }
     .queue-count { font-size: 40px; font-weight: bold; margin-bottom: 10px; pointer-events: none; }
-    .local-stats-block { font-size: 11px; color: #666; margin-top: 5px; padding-top: 5px; border-top: 1px solid #eee; display: flex; justify-content: space-between; }
+    
+    /* Stats inside card */
+    .local-stats-block { 
+        font-size: 11px; color: #666; margin-top: 5px; padding-top: 5px; border-top: 1px solid #eee; 
+        display: flex; justify-content: space-between; 
+    }
     body.dark .local-stats-block { color: #aaa; border-color: #444; }
 
-    /* List */
+    /* LIST VIEW */
     .list-container { width: 100%; overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     body.dark .list-container { background: #2e2e2e; }
     table { width: 100%; border-collapse: collapse; min-width: 800px; }
@@ -98,11 +100,10 @@
     body.dark .bg-med { background: #665700; color: #fff3cd; }
     body.dark .bg-high { background: #5b1f1f; color: #f8d7da; }
 
-    /* Callers */
+    /* CALLERS LIST */
     .callers-list { font-size: 14px; line-height: 1.6; flex-grow: 1; margin: 6px 0 8px 0; }
     .caller-row { display: flex; align-items: center; margin-bottom: 5px; border-bottom: 1px dotted #eee; padding-bottom: 2px;}
     body.dark .caller-row { border-color: #444; }
-    .caller-row:last-child { border-bottom: none; }
     .caller-index { margin-right: 8px; font-weight: bold; color: #888; min-width: 20px; }
     .caller-info { white-space: normal; overflow: visible; flex-grow: 1; margin: 0 5px; }
     .action-btn { cursor: pointer; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; transition: 0.2s; font-size: 16px; }
@@ -111,12 +112,12 @@
     .accept-btn { color: #28a745; margin-right: 4px; }
     .copy-btn { opacity: 0.6; } .copy-btn:hover { opacity: 1; }
 
-    /* Tooltips */
+    /* TOOLTIPS */
     .stat-container { position: relative; display: inline-block; cursor: help; }
     .stat-tooltip {
-        visibility: hidden; width: 110px; background-color: rgba(0,0,0,0.9); color: #fff; text-align: left;
+        visibility: hidden; width: 120px; background-color: rgba(0,0,0,0.9); color: #fff; text-align: left;
         border-radius: 6px; padding: 8px; position: absolute; z-index: 9999;
-        bottom: 125%; left: 50%; margin-left: -55px; opacity: 0; transition: opacity 0.3s;
+        bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: opacity 0.3s;
         font-size: 11px; line-height: 1.4; pointer-events: none;
     }
     .stat-tooltip::after {
@@ -127,45 +128,60 @@
 
     /* GLOBAL BAR */
     .global-stats {
-        position: fixed; bottom: 0; left: 0; right: 0; /* right:0 for full width */
+        position: fixed; bottom: 0; left: 0; right: 0;
         background: #2c3e50; color: white;
-        box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 2000; display: flex; justify-content: center;
-        padding: 10px 0; gap: 30px; transition: transform 0.3s;
+        box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 2000;
+        display: flex; justify-content: center; align-items: flex-start;
+        padding: 10px 0; font-size: 14px; gap: 30px;
+        min-height: 70px;
+        transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
         width: 100%;
     }
     body.dark .global-stats { background: #252525; border-top: 1px solid #444; }
     .global-stats.minimized { transform: translateY(100%); }
+    
     .stats-toggle-tab {
-        position: absolute; top: -24px; right: 20px; background: #2c3e50; color: white;
-        padding: 2px 15px; border-radius: 8px 8px 0 0; cursor: pointer; font-size: 12px;
+        position: absolute; top: -24px; right: 20px;
+        background: #2c3e50; color: white;
+        padding: 2px 15px; border-radius: 8px 8px 0 0;
+        cursor: pointer; font-size: 12px;
+        box-shadow: 0 -2px 5px rgba(0,0,0,0.1);
+        z-index: 2001; user-select: none;
     }
     body.dark .stats-toggle-tab { background: #252525; border: 1px solid #444; border-bottom: none; }
     
     .g-stat-item { text-align: center; min-width: 100px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 20px; }
     .g-stat-item:last-child { border: none; }
-    .g-stat-value { font-size: 20px; font-weight: bold; }
-    .g-stat-label { font-size: 10px; opacity: 0.7; text-transform: uppercase; }
-    .g-stat-sub { font-size: 11px; opacity: 0.8; }
-    .top-count { color: #ff6b6b; font-weight: bold; margin-right: 5px; }
+    .g-stat-value { font-size: 20px; font-weight: bold; line-height: 1.2; }
+    .g-stat-label { font-size: 10px; opacity: 0.7; text-transform: uppercase; margin-bottom: 3px; }
+    .g-stat-sub { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+    .top-list { font-size: 12px; text-align: left; display: inline-block; }
+    .top-count { color: #ff6b6b; font-weight: bold; margin-right: 5px; min-width: 15px; display: inline-block; text-align: right; }
 
-    /* Modals & Settings */
+    /* MODAL */
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 3000; }
     .modal-content { background: white; padding: 20px; border-radius: 12px; width: 360px; max-height: 85vh; overflow-y: auto; }
     body.dark .modal-content { background: #2b2b2b; color: #eee; }
     .settings-group { margin-bottom: 10px; border-bottom: 1px solid #ddd; padding-bottom: 10px; }
     body.dark .settings-group { border-color: #444; }
+    input[type="text"], select { width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ccc; background: #fff; color: #000; }
+    body.dark input[type="text"], body.dark select { background: #3a3a3a; border-color: #666; color: #eee; }
     .add-queue-form { display: flex; gap: 5px; margin-top: 5px; }
     .delete-q-btn { background: none; border: none; color: #ff4444; cursor: pointer; }
     
-    /* Cheatsheet */
-    .cheatsheet { margin-top: 30px; padding: 20px; background: white; display: flex; gap: 40px; margin-bottom: 100px; border-radius: 12px; flex-wrap: wrap;}
+    /* CHEATSHEET */
+    .cheatsheet { margin-top: 30px; padding: 20px; border-radius: 12px; background: #fff; display: flex; flex-wrap: wrap; gap: 40px; margin-bottom: 100px; }
     body.dark .cheatsheet { background: #2e2e2e; color: #eee; }
+    .cheatsheet h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+    body.dark .cheatsheet h3 { border-color: #444; }
+    .cheatsheet ul { list-style: none; padding: 0; margin: 0; }
+    .cheatsheet li { margin: 4px 0; font-size: 14px; }
   </style>
 </head>
 <body>
 
 <div class="top-bar">
-  <h1 style="margin:0">📞 Активні черги</h1>
+  <h1>📞 Активні черги</h1>
   <div class="controls">
       <button class="btn active" id="viewGridBtn" onclick="switchView('grid')">🔲</button>
       <button class="btn" id="viewListBtn" onclick="switchView('list')">☰</button>
@@ -174,7 +190,7 @@
   </div>
 </div>
 
-<div id="status" style="margin-bottom:20px; color:#666;">🔄 Підключення...</div>
+<div id="status">🔄 Підключення...</div>
 
 <div class="grid" id="queuesGrid"></div>
 
@@ -214,7 +230,7 @@
     </div>
     
     <div class="g-stat-item" style="min-width: 180px;">
-        <span class="g-stat-label">Global Daily Stats</span>
+        <span class="g-stat-label">Daily Stats (Server)</span>
         <div style="display: flex; justify-content: space-around;">
             <div class="stat-container">
                 <div class="g-stat-value" id="gs-today-ans" style="color: #2ecc71;">0</div>
@@ -263,6 +279,22 @@
   // 👇👇👇 ВАША ССЫЛКА С RENDER
   const API_URL = "https://queue-server-fbi5.onrender.com/stats"; 
 
+  // --- 1. CONSTANTS (MOVED TO TOP) ---
+  const defaultQueueNames = {
+    Q700: "TrackEnsure Support", Q701: "TrackEnsure Support rus/ukr", Q801: "Callback rus/ukr", Q800: "Callback",
+    Q791: "TrackEnsure New", Q750: "VIP Queue", Q702: "Fleet Supp", Q710: "Alfa Support",
+    Q733: "Alfa VIP", Q720: "Vista Support", Q734: "Vista VIP", Q740: "Swift Support",
+    Q760: "Swift VIP", Q766: "Sharp Support", Q745: "Club Support", Q781: "Pro-TracKing Support",
+    Q730: "Smart eLog Support", Q777: "KGZ"
+  };
+
+  const translations = {
+    ua: { title: "📞 Активні черги", connecting: "🔄 Підключення...", connected: "✅ З'єднання встановлено", lost: "🔌 З'єднання втрачено...", settings: "Налаштування", visibleQueues: "Видимі черги:", addQueue: "Додати чергу:", add: "Додати", save: "Зберегти", cancel: "Скасувати", accept: "Прийняти", copied: "Скопійовано!", userExt: "Ваш Extension:", userExtPh: "напр. 101" },
+    ru: { title: "📞 Активные очереди", connecting: "🔄 Подключение...", connected: "✅ Соединение установлено", lost: "🔌 Соединение потеряно...", settings: "Настройки", visibleQueues: "Видимые очереди:", addQueue: "Добавить очередь:", add: "Добавить", save: "Сохранить", cancel: "Отмена", accept: "Принять", copied: "Скопировано!", userExt: "Ваш внутренний номер (Extension):", userExtPh: "напр. 101" },
+    en: { title: "📞 Active Queues", connecting: "🔄 Connecting...", connected: "✅ Connected", lost: "🔌 Connection lost...", settings: "Settings", visibleQueues: "Visible queues:", addQueue: "Add Queue:", add: "Add", save: "Save", cancel: "Cancel", accept: "Accept", copied: "Copied!", userExt: "Your Extension:", userExtPh: "e.g. 101" }
+  };
+
+  // --- 2. STATE ---
   let currentView = localStorage.getItem('viewMode') || 'grid';
   let isDragEnabled = false;
   
@@ -270,69 +302,31 @@
   const queuesData = {};   
   const timers = {};       
   
+  // Full stats from server
   let fullStats = { daily: { queues: {} }, queuesPeriods: {}, globalPeriods: { h1:{}, h2:{}, h4:{} } };
 
+  // --- 3. DOM ELEMENTS ---
   const statusEl = document.getElementById('status');
   const gridEl = document.getElementById('queuesGrid');
+  const listEl = document.getElementById('queuesList');
   const listBody = document.getElementById('listBody');
   const settingsModal = document.getElementById('settingsModal');
   const settingsForm = document.getElementById('settingsForm');
   const dragBtn = document.getElementById('dragBtn');
 
-// --- FETCH STATS ---
-  async function fetchGlobalStats() {
-      try {
-          const res = await fetch(API_URL);
-          if (res.ok) {
-              const data = await res.json();
-              fullStats = data;
-              
-              // 1. Обновляем общую статистику
-              updateGlobalSummary(); 
-              
-              // 2. Обновляем цифры в карточках (Ans/Abd/SL)
-              Object.keys(fullStats.daily.queues).forEach(qid => {
-                  updateStatLabels('ls-', qid);
-                  updateStatLabels('l-', qid);
-              });
-
-              // 3. НОВОЕ: Обновляем список звонящих (восстанавливаем после F5)
-              if (data.activeCallers) {
-                  Object.keys(data.activeCallers).forEach(qid => {
-                      const serverList = data.activeCallers[qid] || [];
-                      
-                      // Превращаем данные сервера в формат для нашего UI
-                      // Сервер: { number, name, joinTime }
-                      // UI ожидает: { number, name, lang } (lang парсим тут)
-                      
-                      const uiList = serverList.map(c => {
-                          const rawName = c.name;
-                          const lang = detectLanguage(rawName);
-                          const cleanName = detectName(rawName);
-                          
-                          let displayText = "—";
-                          if (c.number && cleanName) displayText = `${c.number} (${cleanName})`;
-                          else if (c.number) displayText = c.number;
-                          else if (cleanName) displayText = cleanName;
-
-                          return { number: c.number, name: displayText, lang: lang };
-                      });
-
-                      // Сохраняем и рисуем
-                      queueCallers[qid] = uiList;
-                      updateCallersList(qid);
-                  });
-              }
-          }
-      } catch (e) { console.warn("Failed to fetch stats:", e); }
+  // --- 4. HELPERS ---
+  function getLang() { return localStorage.getItem('lang') || 'ua'; }
+  function getTheme() { return localStorage.getItem('theme') || 'light'; }
+  function getUserExt() { return localStorage.getItem('userExt') || ''; }
+  function getCustomQueues() { return JSON.parse(localStorage.getItem('customQueues') || '{}'); }
+  function getAllQueues() { return { ...defaultQueueNames, ...getCustomQueues() }; }
+  function loadVisibleQueues() { return JSON.parse(localStorage.getItem('visibleQueues') || JSON.stringify(Object.keys(getAllQueues()))); }
+  function saveVisibleQueues(list) { localStorage.setItem('visibleQueues', JSON.stringify(list)); }
+  function formatTime(seconds) { const m = String(Math.floor(seconds / 60)).padStart(2, '0'); const s = String(seconds % 60).padStart(2, '0'); return `${m}:${s}`; }
+  function getQStats(qid) {
+      if (!fullStats.daily.queues || !fullStats.daily.queues[qid]) return { ans: 0, abd: 0, sl_hits: 0 };
+      return fullStats.daily.queues[qid];
   }
-  // Запускаем сразу и потом каждые 5 сек (чтобы список звонящих был свежим у всех)
-  setInterval(fetchGlobalStats, 5000); 
-  fetchGlobalStats();
-
-  // ... (ОСТАЛЬНОЙ КОД БЕЗ ИЗМЕНЕНИЙ) ...
-  // Убедитесь, что функции-хелперы ниже существуют в вашем коде (они там были):
-  
   function detectLanguage(name) { 
       if (!name) return "?";
       const u = name.toUpperCase(); 
@@ -341,19 +335,54 @@
       if (u.includes("EN")) return "en"; 
       return "?"; 
   }
-  
   function detectName(raw) { 
       if (!raw) return "";
       const idx = raw.lastIndexOf(":"); 
       return idx === -1 ? raw : raw.slice(idx + 1).trim(); 
   }
 
-  function getQStats(qid) {
-      if (!fullStats.daily.queues || !fullStats.daily.queues[qid]) return { ans: 0, abd: 0, sl_hits: 0 };
-      return fullStats.daily.queues[qid];
-  }
+  // --- 5. LOGIC: FETCH ---
+  async function fetchGlobalStats() {
+      try {
+          const res = await fetch(API_URL);
+          if (res.ok) {
+              const data = await res.json();
+              fullStats = data;
+              updateGlobalSummary(); 
+              
+              // Restore Callers from Server (Persistence fix)
+              if (data.activeCallers) {
+                  Object.keys(data.activeCallers).forEach(qid => {
+                      const serverList = data.activeCallers[qid] || [];
+                      const uiList = serverList.map(c => {
+                          const rawName = c.name;
+                          const lang = detectLanguage(rawName);
+                          const cleanName = detectName(rawName);
+                          let displayText = "—";
+                          if (c.number && cleanName) displayText = `${c.number} (${cleanName})`;
+                          else if (c.number) displayText = c.number;
+                          else if (cleanName) displayText = cleanName;
+                          return { number: c.number, name: displayText, lang: lang };
+                      });
+                      queueCallers[qid] = uiList;
+                      updateCallersList(qid);
+                  });
+              }
 
-  // Generate Tooltip HTML
+              // Refresh UI numbers
+              const allQ = Object.keys(getAllQueues());
+              allQ.forEach(qid => {
+                  updateStatLabels('ls-', qid); 
+                  updateStatLabels('l-', qid);
+              });
+          }
+      } catch (e) { console.warn("Stats fetch failed", e); }
+  }
+  // Start polling
+  setInterval(fetchGlobalStats, 5000); 
+  fetchGlobalStats(); // Initial call
+
+  // --- 6. UI LOGIC ---
   function getTooltipHTML(type, qid) {
       const source = qid ? (fullStats.queuesPeriods[qid] || {}) : fullStats.globalPeriods;
       const h1 = source.h1 || { ans: 0, abd: 0, sl: 0 };
@@ -384,7 +413,79 @@
       if(tipSl) tipSl.innerHTML = getTooltipHTML('sl', qid);
   }
 
-  // UI Construction
+  function updateGlobalSummary() {
+      const allQueueIds = Object.keys(getAllQueues());
+      let totalWaiting = 0; let maxHold = 0; let busyList = [];
+      allQueueIds.forEach(qid => {
+          const d = queuesData[qid];
+          if(d) {
+              const calls = Number(d.queued_calls || 0);
+              totalWaiting += calls;
+              const h = Number(d.hold || 0);
+              if(h > maxHold) maxHold = h;
+              if(calls > 0) busyList.push({ name: getAllQueues()[qid] || qid, count: calls });
+          }
+      });
+
+      document.getElementById('gs-waiting').textContent = totalWaiting;
+      const mhEl = document.getElementById('gs-max-hold');
+      mhEl.textContent = formatTime(maxHold);
+      if(maxHold >= 600) mhEl.classList.add('alert'); else mhEl.classList.remove('alert');
+
+      let totalAns = 0; let totalAbd = 0; let totalSLHits = 0;
+      if (fullStats.daily.queues) {
+          Object.values(fullStats.daily.queues).forEach(s => {
+              totalAns += s.ans; totalAbd += s.abd; totalSLHits += s.sl_hits;
+          });
+      }
+      const totalSlPercent = totalAns > 0 ? Math.round((totalSLHits / totalAns) * 100) : 0;
+      document.getElementById('gs-today-ans').textContent = totalAns;
+      document.getElementById('gs-today-abd').textContent = totalAbd;
+      document.getElementById('gs-today-sl').textContent = totalSlPercent + '%';
+
+      document.getElementById('tip-g-ans').innerHTML = getTooltipHTML('ans', null);
+      document.getElementById('tip-g-abd').innerHTML = getTooltipHTML('abd', null);
+      document.getElementById('tip-g-sl').innerHTML = getTooltipHTML('sl', null);
+
+      const top3Container = document.getElementById('gs-top3');
+      if (busyList.length === 0) {
+          top3Container.innerHTML = '<div style="opacity:0.5; margin-top:5px;">— No Calls —</div>';
+      } else {
+          busyList.sort((a, b) => b.count - a.count);
+          top3Container.innerHTML = busyList.slice(0, 3).map(item => `<div style="margin-bottom:2px"><span style="color:#ff6b6b;font-weight:bold;margin-right:5px">${item.count}</span><span>${item.name}</span></div>`).join('');
+      }
+  }
+
+  // --- 7. RENDERING ---
+  function switchView(mode) {
+      currentView = mode; localStorage.setItem('viewMode', mode);
+      const gridBtn = document.getElementById('viewGridBtn'); const listBtn = document.getElementById('viewListBtn');
+      if (mode === 'grid') {
+          gridEl.classList.remove('hidden'); listEl.classList.add('hidden');
+          gridBtn.classList.add('active'); listBtn.classList.remove('active');
+          dragBtn.style.display = 'inline-flex';
+      } else {
+          gridEl.classList.add('hidden'); listEl.classList.remove('hidden');
+          gridBtn.classList.remove('active'); listBtn.classList.add('active');
+          dragBtn.style.display = 'none'; isDragEnabled = false; updateDragUI();
+      }
+      renderAll();
+  }
+
+  function renderAll() {
+      const visibleQueues = loadVisibleQueues(); const allQueues = getAllQueues();
+      gridEl.innerHTML = ''; listBody.innerHTML = '';
+      visibleQueues.forEach(qid => {
+          const name = allQueues[qid] || qid;
+          const data = queuesData[qid] || { queued_calls: 0, logged_in: "-", available: "-", hold: 0 };
+          gridEl.appendChild(createCard(qid, name, data));
+          const { mainRow, detailRow } = createListRow(qid, name, data);
+          listBody.appendChild(mainRow); listBody.appendChild(detailRow);
+          updateCallersList(qid);
+      });
+      updateGlobalSummary();
+  }
+
   function createCard(qid, name, data) {
       const card = document.createElement('div');
       card.className = 'card'; card.id = `card-${qid}`; card.setAttribute('draggable', isDragEnabled);
@@ -453,73 +554,7 @@
       return { mainRow: tr, detailRow: detailTr };
   }
 
-  function updateGlobalSummary() {
-      const allQueueIds = Object.keys(getAllQueues());
-      let totalWaiting = 0; let maxHold = 0; let busyList = [];
-      allQueueIds.forEach(qid => {
-          const d = queuesData[qid];
-          if(d) {
-              const calls = Number(d.queued_calls || 0);
-              totalWaiting += calls;
-              const h = Number(d.hold || 0);
-              if(h > maxHold) maxHold = h;
-              if(calls > 0) busyList.push({ name: getAllQueues()[qid] || qid, count: calls });
-          }
-      });
-
-      document.getElementById('gs-waiting').textContent = totalWaiting;
-      const mhEl = document.getElementById('gs-max-hold');
-      mhEl.textContent = formatTime(maxHold);
-      if(maxHold >= 600) mhEl.classList.add('alert'); else mhEl.classList.remove('alert');
-
-      let totalAns = 0; let totalAbd = 0; let totalSLHits = 0;
-      if (fullStats.daily.queues) {
-          Object.values(fullStats.daily.queues).forEach(s => {
-              totalAns += s.ans; totalAbd += s.abd; totalSLHits += s.sl_hits;
-          });
-      }
-      const totalSlPercent = totalAns > 0 ? Math.round((totalSLHits / totalAns) * 100) : 0;
-      document.getElementById('gs-today-ans').textContent = totalAns;
-      document.getElementById('gs-today-abd').textContent = totalAbd;
-      document.getElementById('gs-today-sl').textContent = totalSlPercent + '%';
-
-      document.getElementById('tip-g-ans').innerHTML = getTooltipHTML('ans', null);
-      document.getElementById('tip-g-abd').innerHTML = getTooltipHTML('abd', null);
-      document.getElementById('tip-g-sl').innerHTML = getTooltipHTML('sl', null);
-
-      const top3Container = document.getElementById('gs-top3');
-      if (busyList.length === 0) {
-          top3Container.innerHTML = '<div style="opacity:0.5; margin-top:5px;">— No Calls —</div>';
-      } else {
-          busyList.sort((a, b) => b.count - a.count);
-          top3Container.innerHTML = busyList.slice(0, 3).map(item => `<div style="margin-bottom:2px"><span style="color:#ff6b6b;font-weight:bold;margin-right:5px">${item.count}</span><span>${item.name}</span></div>`).join('');
-      }
-  }
-
-  // --- STANDARD BOILERPLATE ---
-  const defaultQueueNames = {
-    Q700: "TrackEnsure Support", Q701: "TrackEnsure Support rus/ukr", Q801: "Callback rus/ukr", Q800: "Callback",
-    Q791: "TrackEnsure New", Q750: "VIP Queue", Q702: "Fleet Supp", Q710: "Alfa Support",
-    Q733: "Alfa VIP", Q720: "Vista Support", Q734: "Vista VIP", Q740: "Swift Support",
-    Q760: "Swift VIP", Q766: "Sharp Support", Q745: "Club Support", Q781: "Pro-TracKing Support",
-    Q730: "Smart eLog Support", Q777: "KGZ"
-  };
-  function getLang() { return localStorage.getItem('lang') || 'ua'; }
-  function getTheme() { return localStorage.getItem('theme') || 'light'; }
-  function getUserExt() { return localStorage.getItem('userExt') || ''; }
-  function getCustomQueues() { return JSON.parse(localStorage.getItem('customQueues') || '{}'); }
-  function getAllQueues() { return { ...defaultQueueNames, ...getCustomQueues() }; }
-  function loadVisibleQueues() { return JSON.parse(localStorage.getItem('visibleQueues') || JSON.stringify(Object.keys(getAllQueues()))); }
-  function saveVisibleQueues(list) { localStorage.setItem('visibleQueues', JSON.stringify(list)); }
-  function formatTime(seconds) { const m = String(Math.floor(seconds / 60)).padStart(2, '0'); const s = String(seconds % 60).padStart(2, '0'); return `${m}:${s}`; }
-  
-  function switchView(mode) {
-      currentView = mode; localStorage.setItem('viewMode', mode);
-      const gridBtn = document.getElementById('viewGridBtn'); const listBtn = document.getElementById('viewListBtn');
-      if (mode === 'grid') { gridEl.classList.remove('hidden'); document.getElementById('queuesList').classList.add('hidden'); gridBtn.classList.add('active'); listBtn.classList.remove('active'); dragBtn.style.display = 'inline-flex'; }
-      else { gridEl.classList.add('hidden'); document.getElementById('queuesList').classList.remove('hidden'); gridBtn.classList.remove('active'); listBtn.classList.add('active'); dragBtn.style.display = 'none'; isDragEnabled = false; updateDragUI(); }
-      renderAll();
-  }
+  // --- 8. EVENTS & ACTIONS ---
   function toggleDragMode() { isDragEnabled = !isDragEnabled; updateDragUI(); }
   function updateDragUI() { dragBtn.textContent = isDragEnabled ? "✋" : "🔒"; dragBtn.classList.toggle("active", isDragEnabled); document.body.classList.toggle("drag-enabled", isDragEnabled); document.querySelectorAll('.card').forEach(c => c.setAttribute('draggable', isDragEnabled)); }
   function toggleStatsBar() { const bar = document.getElementById('statsBar'); const btn = document.getElementById('statsToggleIcon'); bar.classList.toggle('minimized'); if (bar.classList.contains('minimized')) { btn.textContent = '▲ Статистика'; localStorage.setItem('statsBarMinimized', 'true'); } else { btn.textContent = '▼ Сховати'; localStorage.setItem('statsBarMinimized', 'false'); }}
@@ -580,13 +615,24 @@
       const ll = document.getElementById(`l-callers-${qid}`); if(ll) ll.innerHTML = generateHTML(callers);
   }
 
+  function handleDragStart(e) { if (!isDragEnabled) { e.preventDefault(); return false; } dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', this.innerHTML); this.classList.add('dragging'); }
+  function handleDragOver(e) { if (isDragEnabled) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } return false; }
+  function handleDragEnter(e) { if(isDragEnabled) this.classList.add('over'); }
+  function handleDragLeave(e) { this.classList.remove('over'); }
+  function handleDrop(e) { if (!isDragEnabled) return; if (e.stopPropagation) e.stopPropagation(); this.classList.remove('over');
+      if (dragSrcEl !== this) {
+          const srcId = dragSrcEl.id.replace('card-', ''); const targetId = this.id.replace('card-', '');
+          const list = loadVisibleQueues(); const from = list.indexOf(srcId); const to = list.indexOf(targetId);
+          if (from > -1 && to > -1) { list.splice(from, 1); list.splice(to, 0, srcId); saveVisibleQueues(list); renderAll(); }
+      } return false; }
+  function handleDragEnd(e) { this.classList.remove('dragging'); this.classList.remove('over'); document.querySelectorAll('.card').forEach(c => { c.classList.remove('over'); c.classList.remove('dragging'); }); }
+  let dragSrcEl = null;
+
   function connectWebSocket() {
     statusEl.textContent = "🔄 Підключення...";
     const socket = new WebSocket("wss://trackensure.gitstel.net/sw-monitor/?EIO=3&transport=websocket");
     socket.onopen = () => { statusEl.textContent = "✅ З'єднання встановлено"; };
-    function detectLanguage(name) { const u = name.toUpperCase(); if (u.includes("UKR")) return "ukr"; if (u.includes("RU")) return "ru"; if (u.includes("EN")) return "en"; return "?"; }
-    function detectName(raw) { const idx = raw.lastIndexOf(":"); return idx === -1 ? raw : raw.slice(idx + 1).trim(); }
-
+    
     socket.onmessage = (event) => {
       const data = event.data;
       if (data.startsWith('42')) {
@@ -625,7 +671,7 @@
     socket.onclose = () => { statusEl.textContent = "🔌 З'єднання втрачено..."; setTimeout(connectWebSocket, 5000); };
   }
 
-  // --- SETTINGS (Simplified) ---
+  // --- SETTINGS ---
   function openSettings() {
     settingsForm.innerHTML = `
       <div class="settings-group"><strong>Ваш Extension:</strong><input type="text" name="userExt" value="${getUserExt()}" placeholder="101"></div>
@@ -658,7 +704,7 @@
       renderAll(); closeSettings();
   }
 
-  // Init
+  // --- INIT ---
   document.body.className = getTheme();
   switchView(currentView);
   connectWebSocket();
