@@ -4,18 +4,24 @@
   <meta charset="UTF-8">
   <title>Моніторинг черг</title>
   <style>
-    /* GLOBAL */
+    /* --- GLOBAL RESET --- */
     * { box-sizing: border-box; }
+    
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      padding: 20px; padding-bottom: 90px; margin: 0;
-      background: #f2f2f2; color: #000; transition: 0.3s;
+      padding: 20px;
+      padding-bottom: 90px;
+      margin: 0;
+      background: #f2f2f2;
+      color: #000;
+      transition: background 0.3s, color 0.3s;
       overflow-x: hidden;
     }
+
     body.dark { background: #1e1e1e; color: #ddd; }
     .hidden { display: none !important; }
     
-    /* UTILS */
+    /* COLORS */
     .text-normal { color: inherit; }
     .text-warn { color: #d35400; font-weight: bold; }
     .text-danger { color: #c0392b; font-weight: 900; animation: pulse 2s infinite; }
@@ -28,41 +34,63 @@
     h1 { margin: 0; font-size: 24px; white-space: nowrap; }
     #status { margin-bottom: 20px; font-size: 14px; color: #666; }
     body.dark #status { color: #aaa; }
+
     .controls { display: flex; gap: 8px; }
-    .btn { cursor: pointer; font-size: 16px; background: #fff; border: 1px solid #ccc; padding: 6px 12px; border-radius: 6px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; }
+    .btn {
+      cursor: pointer; font-size: 16px; background: #fff; border: 1px solid #ccc;
+      padding: 6px 12px; border-radius: 6px; transition: 0.2s; display: inline-flex;
+      align-items: center; justify-content: center;
+    }
+    .btn:hover { background-color: #e9e9e9; }
     .btn.active { background-color: #d4edda; border-color: #28a745; color: #155724; }
     body.dark .btn { background: #444; border-color: #666; color: #eee; }
-    body.dark .btn.active { background-color: #235d3a; color: #fff; }
+    body.dark .btn:hover { background-color: #555; }
+    body.dark .btn.active { background-color: #235d3a; border-color: #28a745; color: #fff; }
 
-    /* GRID */
+    /* GRID VIEW */
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; width: 100%; }
-    .card { background: white; border-radius: 12px; padding: 20px 22px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; transition: 0.3s; min-height: 250px; }
+    .card {
+      background: white; border-radius: 12px; padding: 20px 22px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+      justify-content: space-between; transition: box-shadow 0.3s; min-height: 250px;
+    }
     body.dark .card { background: #2e2e2e; color: #eee; }
+    body.drag-enabled .card { cursor: grab; }
+    body.drag-enabled .card:active { cursor: grabbing; }
+    .card:hover { box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
     .card.dragging { opacity: 0.4; border: 2px dashed #999; }
+    
     .queue-name { font-weight: bold; font-size: 18px; margin-bottom: 4px; pointer-events: none; }
     .queue-id { font-size: 13px; color: #565656; margin-bottom: 10px; pointer-events: none; }
     body.dark .queue-id { color: #aaa; }
     .queue-count { font-size: 40px; font-weight: bold; margin-bottom: 10px; pointer-events: none; }
-    .local-stats-block { font-size: 11px; color: #666; margin-top: 5px; padding-top: 5px; border-top: 1px solid #eee; display: flex; justify-content: space-between; }
+    
+    .local-stats-block { 
+        font-size: 11px; color: #666; margin-top: 5px; padding-top: 5px; border-top: 1px solid #eee; 
+        display: flex; justify-content: space-between; 
+    }
     body.dark .local-stats-block { color: #aaa; border-color: #444; }
 
-    /* LIST */
+    /* LIST VIEW */
     .list-container { width: 100%; overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     body.dark .list-container { background: #2e2e2e; }
     table { width: 100%; border-collapse: collapse; min-width: 800px; }
-    th { text-align: left; padding: 12px 15px; border-bottom: 2px solid #ddd; font-size: 14px; background: #f8f8f8; color: #555; }
-    body.dark th { border-color: #444; background: #333; color: #aaa; }
-    td { padding: 12px 15px; border-bottom: 1px solid #eee; }
+    th { text-align: left; padding: 12px 15px; border-bottom: 2px solid #ddd; font-size: 14px; color: #555; background-color: #f8f8f8; }
+    body.dark th { border-color: #444; color: #aaa; background-color: #333; }
+    td { padding: 12px 15px; border-bottom: 1px solid #eee; vertical-align: middle; font-size: 15px; }
     body.dark td { border-color: #444; }
-    .queue-row { cursor: pointer; transition: 0.1s; }
+    
+    .queue-row { cursor: pointer; transition: background 0.1s; }
     .queue-row:hover { background-color: #f0f0f0; }
     body.dark .queue-row:hover { background-color: #383838; }
+    
     .detail-row { display: none; background-color: #fafafa; }
     body.dark .detail-row { background-color: #252525; }
     .detail-row.open { display: table-row; }
-    .detail-content { padding: 15px; max-height: 300px; overflow-y: auto; }
-    .toggle-icon { display: inline-block; width: 20px; transition: 0.2s; }
+    .detail-content { padding: 15px; max-height: 300px; overflow-y: auto; border-bottom: 1px solid #ddd; }
+    .toggle-icon { display: inline-block; width: 20px; transition: transform 0.2s; color: #888; }
     .queue-row.expanded .toggle-icon { transform: rotate(90deg); }
+    
     .badge { padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 14px; }
     .bg-low { background: #d4edda; color: #155724; }
     .bg-med { background: #fff3cd; color: #5c4604; }
@@ -71,16 +99,17 @@
     body.dark .bg-med { background: #665700; color: #fff3cd; }
     body.dark .bg-high { background: #5b1f1f; color: #f8d7da; }
 
-    /* CALLERS */
+    /* CALLERS LIST */
     .callers-list { font-size: 14px; line-height: 1.6; flex-grow: 1; margin: 6px 0 8px 0; }
-    .caller-row { display: flex; align-items: center; margin-bottom: 5px; border-bottom: 1px dotted #eee; }
+    .caller-row { display: flex; align-items: center; margin-bottom: 5px; border-bottom: 1px dotted #eee; padding-bottom: 2px;}
     body.dark .caller-row { border-color: #444; }
     .caller-index { margin-right: 8px; font-weight: bold; color: #888; min-width: 20px; }
     .caller-info { white-space: normal; overflow: visible; flex-grow: 1; margin: 0 5px; }
-    .action-btn { cursor: pointer; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; margin: 0 2px; }
+    .action-btn { cursor: pointer; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; transition: 0.2s; font-size: 16px; }
     .action-btn:hover { background-color: rgba(0,0,0,0.1); transform: scale(1.1); }
     body.dark .action-btn:hover { background-color: rgba(255,255,255,0.1); }
-    .accept-btn { color: #28a745; } .copy-btn { opacity: 0.6; } .copy-btn:hover { opacity: 1; }
+    .accept-btn { color: #28a745; margin-right: 4px; }
+    .copy-btn { opacity: 0.6; } .copy-btn:hover { opacity: 1; }
 
     /* TOOLTIPS */
     .stat-container { position: relative; display: inline-block; cursor: help; }
@@ -225,13 +254,30 @@
 
 <div class="cheatsheet">
   <div>
-    <h3>📌 Prefixes</h3>
+    <h3>📌 Prefixes | Call numbers</h3>
     <ul>
-      <li>TrackEnsure Support: <strong>04</strong></li>
-      <li>Alfa Support: <strong>06</strong></li>
-      <li>Vista Support: <strong>09</strong></li>
-      <li>Swift Support: <strong>08</strong></li>
-      <li>KGZ: <strong>12</strong></li>
+      <li>TrackEnsure Support: <strong>04</strong> +1(916)860-1234</li>
+      <li>Alfa Support: <strong>06</strong> +1(469)445-27-57</li>
+      <li>Vista Support: <strong>09</strong> +1(614)362-22-23 </li>
+      <li>Swift Support: <strong>08</strong> +1(678)387-51-75</li>
+      <li>Sharp Support: <strong>03</strong> +1(862)208-38-48</li>
+      <li>Club Support: <strong>02</strong> +1(615)900-55-51 </li>
+      <li>Pro-TracKing Support: <strong>11</strong> +1(623)887-44-22</li>
+      <li>Smart eLog Support: <strong>13</strong> +1(916)740-66-74</li>
+      <li>KGZ: <strong>12</strong> +1(217)401-12-22</li>
+    </ul>
+  </div>
+  <div>
+    <h3>💼 Sales</h3>
+    <ul>
+      <li>TrackEnsure Sales: <strong>704</strong></li>
+      <li>Alfa Sales: <strong>725</strong></li>
+      <li>Vista Sales: <strong>726</strong></li>
+      <li>Swift Sales: <strong>728</strong></li>
+      <li>Sharp Sales: <strong>755</strong></li>
+      <li>Club Sales: <strong>746</strong></li>
+      <li>Pro-TracKing Sales: <strong>782</strong></li>
+      <li>Smart eLog Sales: <strong>812</strong></li>
     </ul>
   </div>
 </div>
@@ -240,7 +286,7 @@
   // 👇👇👇 ВАША ССЫЛКА С RENDER
   const API_URL = "https://queue-server-fbi5.onrender.com/stats"; 
 
-  // --- CONSTANTS ---
+  // --- 1. CONSTANTS ---
   const defaultQueueNames = {
     Q700: "TrackEnsure Support", Q701: "TrackEnsure Support rus/ukr", Q801: "Callback rus/ukr", Q800: "Callback",
     Q791: "TrackEnsure New", Q750: "VIP Queue", Q702: "Fleet Supp", Q710: "Alfa Support",
@@ -249,7 +295,13 @@
     Q730: "Smart eLog Support", Q777: "KGZ"
   };
 
-  // --- STATE ---
+  const translations = {
+    ua: { title: "📞 Активні черги", connecting: "🔄 Підключення...", connected: "✅ З'єднання встановлено", lost: "🔌 З'єднання втрачено...", settings: "Налаштування", visibleQueues: "Видимі черги:", addQueue: "Додати чергу:", add: "Додати", save: "Зберегти", cancel: "Скасувати", accept: "Прийняти", copied: "Скопійовано!", userExt: "Ваш Extension:", userExtPh: "напр. 101" },
+    ru: { title: "📞 Активные очереди", connecting: "🔄 Подключение...", connected: "✅ Соединение установлено", lost: "🔌 Соединение потеряно...", settings: "Настройки", visibleQueues: "Видимые очереди:", addQueue: "Добавить очередь:", add: "Добавить", save: "Сохранить", cancel: "Отмена", accept: "Принять", copied: "Скопировано!", userExt: "Ваш внутренний номер (Extension):", userExtPh: "напр. 101" },
+    en: { title: "📞 Active Queues", connecting: "🔄 Connecting...", connected: "✅ Connected", lost: "🔌 Connection lost...", settings: "Settings", visibleQueues: "Visible queues:", addQueue: "Add Queue:", add: "Add", save: "Save", cancel: "Cancel", accept: "Accept", copied: "Copied!", userExt: "Your Extension:", userExtPh: "e.g. 101" }
+  };
+
+  // --- 2. STATE ---
   let currentView = localStorage.getItem('viewMode') || 'grid';
   let isDragEnabled = false;
   
@@ -257,10 +309,10 @@
   const queuesData = {};   
   const timers = {};       
   
-  // Full stats from server (Daily + Periods)
+  // Full stats from server
   let fullStats = { daily: { queues: {} }, queuesPeriods: {}, globalPeriods: { h1:{}, h2:{}, h4:{} } };
 
-  // --- DOM ---
+  // --- 3. DOM ELEMENTS ---
   const statusEl = document.getElementById('status');
   const gridEl = document.getElementById('queuesGrid');
   const listEl = document.getElementById('queuesList');
@@ -269,7 +321,7 @@
   const settingsForm = document.getElementById('settingsForm');
   const dragBtn = document.getElementById('dragBtn');
 
-  // --- HELPERS ---
+  // --- 4. HELPERS ---
   function getLang() { return localStorage.getItem('lang') || 'ua'; }
   function getTheme() { return localStorage.getItem('theme') || 'light'; }
   function getUserExt() { return localStorage.getItem('userExt') || ''; }
@@ -296,13 +348,15 @@
       return idx === -1 ? raw : raw.slice(idx + 1).trim(); 
   }
 
-  // --- FETCH STATS ---
-  async function fetchGlobalStats() {
+  // --- 5. LOGIC: FETCH ---
+  
+  // А) Загружаем статистику (цифры) - регулярно
+  async function fetchStatsOnly() {
       try {
           const res = await fetch(API_URL);
           if (res.ok) {
               const data = await res.json();
-              fullStats = data; // Сохраняем статистику
+              fullStats = data; // Обновляем глобальную переменную статистики
               
               updateGlobalSummary(); // Обновляем нижнюю панель
               
@@ -315,10 +369,26 @@
           }
       } catch (e) { console.warn("Stats fetch failed", e); }
   }
-  setInterval(fetchGlobalStats, 10000); 
-  fetchGlobalStats(); // Первый вызов
 
-  // --- UI LOGIC ---
+  // Б) Загружаем список звонящих - ТОЛЬКО ОДИН РАЗ (при старте), если есть
+  async function fetchInitialState() {
+      try {
+          const res = await fetch(API_URL);
+          if (res.ok) {
+              const data = await res.json();
+              fullStats = data; // Сохраняем стату
+              // Сразу обновляем интерфейс
+              updateGlobalSummary();
+              renderAll();
+          }
+      } catch (e) { console.warn("Initial fetch failed", e); }
+  }
+
+  // Запуск:
+  fetchInitialState(); // 1 раз
+  setInterval(fetchStatsOnly, 10000); // Каждые 10 сек обновляем только цифры
+
+  // --- 6. UI LOGIC ---
   function getTooltipHTML(type, qid) {
       const source = qid ? (fullStats.queuesPeriods[qid] || {}) : fullStats.globalPeriods;
       const h1 = source.h1 || { ans: 0, abd: 0, sl: 0 };
@@ -392,7 +462,7 @@
       }
   }
 
-  // --- RENDERING ---
+  // --- 7. RENDERING ---
   function switchView(mode) {
       currentView = mode; localStorage.setItem('viewMode', mode);
       const gridBtn = document.getElementById('viewGridBtn'); const listBtn = document.getElementById('viewListBtn');
@@ -490,7 +560,7 @@
       return { mainRow: tr, detailRow: detailTr };
   }
 
-  // --- ACTIONS ---
+  // --- 8. EVENTS & ACTIONS ---
   function toggleDragMode() { isDragEnabled = !isDragEnabled; updateDragUI(); }
   function updateDragUI() { dragBtn.textContent = isDragEnabled ? "✋" : "🔒"; dragBtn.classList.toggle("active", isDragEnabled); document.body.classList.toggle("drag-enabled", isDragEnabled); document.querySelectorAll('.card').forEach(c => c.setAttribute('draggable', isDragEnabled)); }
   function toggleStatsBar() { const bar = document.getElementById('statsBar'); const btn = document.getElementById('statsToggleIcon'); bar.classList.toggle('minimized'); if (bar.classList.contains('minimized')) { btn.textContent = '▲ Статистика'; localStorage.setItem('statsBarMinimized', 'true'); } else { btn.textContent = '▼ Сховати'; localStorage.setItem('statsBarMinimized', 'false'); }}
