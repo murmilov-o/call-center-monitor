@@ -30,22 +30,44 @@
     }
 
     /* --- STATUS COLORS --- */
-    .status-green { background-color: #e8f5e9 !important; border-left: 6px solid #2ecc71 !important; color: #1b5e20 !important; }
+    /* 1. GREEN (1-5 calls) */
+    .status-green { 
+        background-color: #e8f5e9 !important; 
+        border-left: 6px solid #2ecc71 !important; 
+        color: #1b5e20 !important;
+    }
     body.dark .status-green { background-color: #1e3a23 !important; color: #c8e6c9 !important; }
 
-    .status-orange { background-color: #fff3cd !important; border-left: 6px solid #f39c12 !important; color: #856404 !important; }
+    /* 2. ORANGE (6-10 calls) */
+    .status-orange { 
+        background-color: #fff3cd !important; 
+        border-left: 6px solid #f39c12 !important; 
+        color: #856404 !important; 
+    }
     body.dark .status-orange { background-color: #4e3e20 !important; color: #ffda6a !important; }
 
-    .status-red { background-color: #e74c3c !important; color: white !important; border-left: 6px solid #c0392b !important; animation: pulse-red 1.5s infinite; }
-    .status-red .queue-id, .status-red .local-stats-block, .status-red .queue-info-block { color: rgba(255,255,255,0.9) !important; border-color: rgba(255,255,255,0.3) !important; }
+    /* 3. RED (>10 calls) */
+    .status-red { 
+        background-color: #e74c3c !important; 
+        color: white !important; 
+        border-left: 6px solid #c0392b !important; 
+        animation: pulse-red 1.5s infinite;
+    }
+    .status-red .queue-id, .status-red .local-stats-block, .status-red .queue-info-block { 
+        color: rgba(255,255,255,0.9) !important; 
+        border-color: rgba(255,255,255,0.3) !important;
+    }
     .status-red .badge { background: white; color: #c0392b; }
     
     /* --- COMPONENTS --- */
-    .btn { cursor: pointer; font-size: 14px; background: #fff; border: 1px solid #ccc; padding: 6px 12px; border-radius: 6px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; color: #333; }
+    .btn {
+      cursor: pointer; font-size: 14px; background: #fff; border: 1px solid #ccc;
+      padding: 6px 12px; border-radius: 6px; transition: 0.2s; 
+      display: inline-flex; align-items: center; justify-content: center; color: #333;
+    }
     .btn:hover { background-color: #e9e9e9; }
     .btn.active { background-color: #d4edda; border-color: #28a745; color: #155724; }
     .btn.primary { background-color: #007bff; color: white; border-color: #007bff; }
-    .btn.small { padding: 4px 8px; font-size: 12px; margin-right: 4px; margin-bottom: 4px; }
     
     body.dark .btn { background: #444; border-color: #666; color: #eee; }
     body.dark .btn:hover { background-color: #555; }
@@ -59,16 +81,25 @@
 
     /* GRID */
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; width: 100%; }
-    .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; justify-content: space-between; transition: all 0.3s ease; min-height: 220px; border-left: 6px solid #ccc; }
+    .card {
+      background: white; border-radius: 12px; padding: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column;
+      justify-content: space-between; transition: all 0.3s ease; min-height: 220px;
+      border-left: 6px solid #ccc; 
+    }
     body.dark .card { background: #2e2e2e; color: #eee; border-color: #555; }
     .card.dragging { opacity: 0.4; border: 2px dashed #999; }
+    
     .queue-header { display: flex; justify-content: space-between; align-items: flex-start; }
     .queue-name { font-weight: bold; font-size: 18px; line-height: 1.2; margin-bottom: 4px; pointer-events: none; }
     .queue-id { font-size: 13px; color: #565656; margin-bottom: 10px; pointer-events: none; }
     body.dark .queue-id { color: #aaa; }
     .queue-count { font-size: 42px; font-weight: bold; line-height: 1; pointer-events: none; }
     
-    .local-stats-block { font-size: 12px; color: #555; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; }
+    .local-stats-block { 
+        font-size: 12px; color: #555; margin-top: 10px; padding-top: 8px; 
+        border-top: 1px solid rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; 
+    }
     body.dark .local-stats-block { color: #aaa; border-color: rgba(255,255,255,0.1); }
 
     /* LIST */
@@ -79,9 +110,11 @@
     body.dark th { border-color: #444; color: #aaa; background-color: #333; }
     td { padding: 12px 15px; border-bottom: 1px solid #eee; vertical-align: middle; font-size: 15px; }
     body.dark td { border-color: #444; }
+    
     .queue-row { cursor: pointer; transition: background 0.1s; border-left: 6px solid transparent; }
     .queue-row:hover { background-color: #f0f0f0; }
     body.dark .queue-row:hover { background-color: #383838; }
+    
     .detail-row { display: none; background-color: #fafafa; }
     body.dark .detail-row { background-color: #252525; }
     .detail-row.open { display: table-row; }
@@ -102,10 +135,10 @@
     /* TOOLTIPS */
     .stat-container { position: relative; display: inline-block; cursor: help; }
     .stat-tooltip {
-        visibility: hidden; width: 140px; background-color: rgba(0,0,0,0.9); color: #fff; text-align: left;
-        border-radius: 6px; padding: 10px; position: absolute; z-index: 9999;
-        bottom: 125%; left: 50%; margin-left: -70px; opacity: 0; transition: 0.3s;
-        font-size: 12px; line-height: 1.5; pointer-events: none;
+        visibility: hidden; width: 120px; background-color: rgba(0,0,0,0.9); color: #fff; text-align: left;
+        border-radius: 6px; padding: 8px; position: absolute; z-index: 9999;
+        bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: 0.3s;
+        font-size: 11px; pointer-events: none;
     }
     .stat-tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: rgba(0,0,0,0.9) transparent transparent transparent; }
     .stat-container:hover .stat-tooltip { visibility: visible; opacity: 1; }
@@ -146,22 +179,6 @@
     .add-queue-form { display: flex; gap: 8px; margin-top: 5px; }
     .delete-q-btn { background: none; border: none; color: #ff4444; cursor: pointer; font-size: 16px; transition: 0.2s; }
     .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-    .settings-toolbar { margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #eee; display: flex; flex-wrap: wrap; }
-
-    /* HISTORY STYLES */
-    .history-date-row { 
-        padding: 12px; background: #f8f9fa; border-bottom: 1px solid #eee; 
-        cursor: pointer; font-weight: bold; display: flex; justify-content: space-between;
-    }
-    .history-date-row:hover { background: #e9ecef; }
-    body.dark .history-date-row { background: #333; border-color: #444; }
-    body.dark .history-date-row:hover { background: #444; }
-    .history-details { display: none; padding: 10px; background: #fff; }
-    body.dark .history-details { background: #2b2b2b; }
-    .history-details.open { display: block; }
-    .h-table { width: 100%; font-size: 13px; border-collapse: collapse; }
-    .h-table th, .h-table td { padding: 6px; border-bottom: 1px solid #eee; text-align: left; }
-    body.dark .h-table th, body.dark .h-table td { border-color: #444; }
 
     /* CHEATSHEET */
     .cheatsheet { margin-top: 30px; padding: 20px; border-radius: 12px; background: #fff; display: flex; flex-wrap: wrap; gap: 40px; margin-bottom: 100px; }
@@ -180,8 +197,6 @@
       <button class="btn active" id="viewGridBtn" onclick="switchView('grid')" title="Grid View">🔲</button>
       <button class="btn" id="viewListBtn" onclick="switchView('list')" title="List View">☰</button>
       <button class="btn" id="dragBtn" onclick="toggleDragMode()" title="Drag & Drop">🔒</button>
-      
-      <button class="btn" onclick="openHistory()" title="History">📊 Статистика</button>
       <button class="btn" onclick="openSettings()" title="Settings">⚙️ Налаштування</button>
   </div>
 </div>
@@ -234,16 +249,6 @@
     </div>
 </div>
 
-<div class="modal" id="historyModal">
-  <div class="modal-content" style="width: 500px;">
-    <h2>📊 Історія дзвінків</h2>
-    <div id="historyContent">Loading...</div>
-    <div class="modal-buttons">
-      <button type="button" class="btn" onclick="closeHistory()">Close</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal" id="settingsModal">
   <div class="modal-content">
     <h2>Налаштування</h2>
@@ -287,7 +292,6 @@
 
 <script>
   const API_URL = "https://queue-server-fbi5.onrender.com/stats"; 
-  const HISTORY_URL = "https://queue-server-fbi5.onrender.com/history";
 
   const defaultQueueNames = {
     Q700: "TrackEnsure Support", Q701: "TrackEnsure Support rus/ukr", Q801: "Callback rus/ukr", Q800: "Callback",
@@ -306,22 +310,13 @@
   const queuesData = {};   
   const timers = {};       
   
-  // Realtime stats structure
-  let fullStats = { 
-      daily: { queues: {} }, 
-      queuesPeriods: {}, 
-      globalPeriods: { h1:{}, h2:{}, h4:{} }, 
-      globalDaily: { ans: 0, wait: 0 } 
-  };
+  let fullStats = { daily: { queues: {} }, queuesPeriods: {}, globalPeriods: { h1:{}, h2:{}, h4:{} } };
 
   const statusEl = document.getElementById('status');
   const gridEl = document.getElementById('queuesGrid');
-  const listEl = document.getElementById('queuesList');
   const listBody = document.getElementById('listBody');
   const settingsModal = document.getElementById('settingsModal');
   const settingsForm = document.getElementById('settingsForm');
-  const historyModal = document.getElementById('historyModal');
-  const historyContent = document.getElementById('historyContent');
   const dragBtn = document.getElementById('dragBtn');
 
   function getLang() { return localStorage.getItem('lang') || 'ua'; }
@@ -330,6 +325,7 @@
   function getCustomQueues() { return JSON.parse(localStorage.getItem('customQueues') || '{}'); }
   function getAllQueues() { return { ...defaultQueueNames, ...getCustomQueues() }; }
   
+  // -- QUEUE LIST MANAGEMENT --
   function loadVisibleQueues() { 
       const raw = localStorage.getItem('visibleQueues');
       let parsed = [];
@@ -340,22 +336,9 @@
   function saveVisibleQueues(list) { localStorage.setItem('visibleQueues', JSON.stringify(list)); }
 
   function formatTime(seconds) { const m = String(Math.floor(seconds / 60)).padStart(2, '0'); const s = String(seconds % 60).padStart(2, '0'); return `${m}:${s}`; }
-  function formatSecToHHMM(seconds) {
-      if (!seconds) return "0s";
-      const h = Math.floor(seconds / 3600);
-      const m = Math.floor((seconds % 3600) / 60);
-      const s = seconds % 60;
-      if (h > 0) return `${h}h ${m}m`;
-      return `${m}m ${s}s`;
-  }
-
   function getQStats(qid) {
-      if (fullStats.queuesPeriods && fullStats.queuesPeriods[qid]) {
-          // You could return realtime daily logic here if you stored it in server
-          // For now, let's just use what we have available or 0
-          return { ans: 0 };
-      }
-      return { ans: 0 };
+      if (!fullStats.daily.queues || !fullStats.daily.queues[qid]) return { ans: 0 };
+      return fullStats.daily.queues[qid];
   }
   function detectLanguage(name) { if (!name) return "?"; const u = name.toUpperCase(); if (u.includes("UKR")) return "ukr"; if (u.includes("RU")) return "ru"; if (u.includes("EN")) return "en"; return "?"; }
   function detectName(raw) { if (!raw) return ""; const idx = raw.lastIndexOf(":"); return idx === -1 ? raw : raw.slice(idx + 1).trim(); }
@@ -379,96 +362,19 @@
   setInterval(fetchStatsOnly, 10000); 
   fetchStatsOnly();
 
-  // --- HISTORY LOGIC ---
-  async function openHistory() {
-      historyModal.style.display = 'flex';
-      historyContent.innerHTML = 'Завантаження...';
-      try {
-          const res = await fetch(HISTORY_URL);
-          if (!res.ok) throw new Error("Err");
-          const historyData = await res.json();
-          renderHistory(historyData);
-      } catch (e) {
-          historyContent.innerHTML = "Немає даних або помилка з'єднання.";
-      }
-  }
-  
-  function closeHistory() { historyModal.style.display = 'none'; }
-
-  function renderHistory(data) {
-      const dates = Object.keys(data).sort((a,b) => new Date(b) - new Date(a)); // Newest first
-      if (dates.length === 0) { historyContent.innerHTML = "Історія пуста."; return; }
-      
-      let html = '';
-      dates.forEach(dateStr => {
-          const dayData = data[dateStr];
-          const totalAns = dayData.total ? dayData.total.ans : 0;
-          const totalWait = dayData.total ? dayData.total.wait : 0;
-          const avgWait = totalAns > 0 ? Math.round(totalWait / totalAns) : 0;
-          
-          html += `
-            <div class="history-date-row" onclick="toggleHistoryDetails('${dateStr}')">
-                <span>📅 ${dateStr}</span>
-                <span>Ans: ${totalAns} | Avg Wait: ${formatSecToHHMM(avgWait)}</span>
-            </div>
-            <div id="hist-${dateStr}" class="history-details">
-                <table class="h-table">
-                    <thead><tr><th>Hour</th><th>Ans</th><th>Avg Wait</th></tr></thead>
-                    <tbody>
-          `;
-          
-          // Hours
-          const hours = Object.keys(dayData.hours || {}).sort((a,b) => Number(a) - Number(b));
-          hours.forEach(h => {
-              const hData = dayData.hours[h];
-              const hAvg = hData.ans > 0 ? Math.round(hData.wait / hData.ans) : 0;
-              html += `<tr>
-                  <td>${h}:00 - ${h}:59</td>
-                  <td>${hData.ans}</td>
-                  <td>${formatSecToHHMM(hAvg)}</td>
-              </tr>`;
-          });
-          
-          html += `</tbody></table></div>`;
-      });
-      historyContent.innerHTML = html;
-  }
-  
-  // Make global so HTML can access
-  window.toggleHistoryDetails = function(id) {
-      const el = document.getElementById(`hist-${id}`);
-      if (el) el.classList.toggle('open');
-  }
-
-  // --- TOOLTIP & STATS LOGIC ---
   function getTooltipHTML(type, qid) {
       const source = qid ? (fullStats.queuesPeriods[qid] || {}) : fullStats.globalPeriods;
-      const h1 = source.h1 || { ans: 0, wait: 0 };
-      const h2 = source.h2 || { ans: 0, wait: 0 };
-      const h4 = source.h4 || { ans: 0, wait: 0 };
-      
-      return `
-        <div style="margin-bottom:4px; border-bottom:1px solid #555; padding-bottom:2px"><b>Wait Time (Sum)</b></div>
-        1h: <b>${formatSecToHHMM(h1.wait)}</b> <span style="opacity:0.7">(${h1.ans} calls)</span><br>
-        2h: <b>${formatSecToHHMM(h2.wait)}</b> <span style="opacity:0.7">(${h2.ans} calls)</span><br>
-        4h: <b>${formatSecToHHMM(h4.wait)}</b> <span style="opacity:0.7">(${h4.ans} calls)</span>
-      `;
+      const h1 = source.h1 || { ans: 0 };
+      const h2 = source.h2 || { ans: 0 };
+      const h4 = source.h4 || { ans: 0 };
+      const val = (obj) => obj[type];
+      return `1h: <b>${val(h1)}</b><br>2h: <b>${val(h2)}</b><br>4h: <b>${val(h4)}</b>`;
   }
 
   function updateStatLabels(prefix, qid) {
-      // In the new simplified server logic, we rely on queuesPeriods for accurate counting per queue
-      // or we can just show what we have. 
-      // For the card labels (Ans), we try to get it from queuesPeriods.h4 (approx daily) or just 0 if empty
-      let ansVal = 0;
-      if (fullStats.queuesPeriods && fullStats.queuesPeriods[qid]) {
-          // This is a hack because we don't have explicit "Daily Queue Total" in the new simple server
-          // We can use 4h or just leave it 0 until we improve server
-          // Let's use the 4h count as a proxy or just 0
-          ansVal = fullStats.queuesPeriods[qid].h4.ans; 
-      }
-
+      const stats = getQStats(qid);
       const elAns = document.getElementById(`${prefix}ans-${qid}`);
-      if(elAns) elAns.textContent = ansVal;
+      if(elAns) elAns.textContent = stats.ans;
 
       const tipAns = document.getElementById(`${prefix}tip-ans-${qid}`);
       if(tipAns) tipAns.innerHTML = getTooltipHTML('ans', qid);
@@ -493,10 +399,9 @@
       mhEl.textContent = formatTime(maxHold);
       if(maxHold >= 600) mhEl.classList.add('alert'); else mhEl.classList.remove('alert');
 
-      // Global Daily Ans from Server (Accurate)
       let totalAns = 0;
-      if (fullStats.globalDaily) {
-          totalAns = fullStats.globalDaily.ans;
+      if (fullStats.daily.queues) {
+          Object.values(fullStats.daily.queues).forEach(s => { totalAns += s.ans; });
       }
       document.getElementById('gs-today-ans').textContent = totalAns;
       document.getElementById('tip-g-ans').innerHTML = getTooltipHTML('ans', null);
@@ -572,6 +477,7 @@
       return { mainRow: tr, detailRow: detailTr };
   }
 
+  // --- ACTIONS ---
   function switchView(mode) {
       currentView = mode; localStorage.setItem('viewMode', mode);
       const gridBtn = document.getElementById('viewGridBtn'); const listBtn = document.getElementById('viewListBtn');
@@ -700,78 +606,43 @@
     socket.onclose = () => { statusEl.textContent = "🔌 З'єднання втрачено..."; setTimeout(connectWebSocket, 5000); };
   }
 
-  // --- SETTINGS LOGIC ---
+  // --- SETTINGS ---
   function openSettings() {
     settingsForm.innerHTML = `
       <div class="settings-group"><strong>Ваш Extension:</strong><input type="text" name="userExt" value="${getUserExt()}" placeholder="101"></div>
       <div class="settings-group"><strong>Додати чергу:</strong><div class="add-queue-form"><input type="text" id="newQId" placeholder="ID (Q...)"><input type="text" id="newQName" placeholder="Name"><button type="button" class="btn primary" onclick="handleAddClick()">Add</button></div></div>
-      
-      <div class="settings-group">
-        <strong>Управління групами:</strong>
-        <div class="settings-toolbar">
-            <button type="button" class="btn small" onclick="toggleAll(true)">✅ Всі</button>
-            <button type="button" class="btn small" onclick="toggleAll(false)">⬜ Нічого</button>
-            <div style="width:10px"></div>
-            <button type="button" class="btn small" onclick="saveGroup(1)">💾 1</button>
-            <button type="button" class="btn small" onclick="loadGroup(1)">📂 1</button>
-            <button type="button" class="btn small" onclick="saveGroup(2)">💾 2</button>
-            <button type="button" class="btn small" onclick="loadGroup(2)">📂 2</button>
-        </div>
-      </div>
-
       <div class="settings-group"><strong>Видимі черги:</strong><div id="qList"></div></div>
       <div class="settings-group"><strong>Theme:</strong> <label><input type="radio" name="theme" value="light" ${getTheme()==='light'?'checked':''}> Light</label> <label><input type="radio" name="theme" value="dark" ${getTheme()==='dark'?'checked':''}> Dark</label></div>
     `;
-    renderSettingsList();
+    const qList = document.getElementById('qList');
+    const visible = loadVisibleQueues(); const custom = getCustomQueues();
+    Object.entries(getAllQueues()).forEach(([qid, name]) => {
+      const isCustom = custom.hasOwnProperty(qid);
+      const delBtn = isCustom ? `<button class="delete-q-btn" onclick="event.preventDefault(); removeCustomQueue('${qid}')">🗑️</button>` : '';
+      const div = document.createElement('div');
+      div.innerHTML = `<label><span><input type="checkbox" name="queues" value="${qid}" ${visible.includes(qid) ? 'checked' : ''}> ${qid} - ${name} ${isCustom?'(Custom)':''}</span>${delBtn}</label>`;
+      qList.appendChild(div);
+    });
     settingsModal.style.display = 'flex';
   }
-
-  function renderSettingsList() {
-      const qList = document.getElementById('qList');
-      qList.innerHTML = '';
-      const visible = loadVisibleQueues(); const custom = getCustomQueues();
-      Object.entries(getAllQueues()).forEach(([qid, name]) => {
-        const isCustom = custom.hasOwnProperty(qid);
-        const delBtn = isCustom ? `<button class="delete-q-btn" onclick="event.preventDefault(); removeCustomQueue('${qid}')">🗑️</button>` : '';
-        const div = document.createElement('div');
-        const isChecked = visible.includes(qid) ? 'checked' : '';
-        div.innerHTML = `<label><span><input type="checkbox" name="queues" value="${qid}" ${isChecked}> ${qid} - ${name} ${isCustom?'(Custom)':''}</span>${delBtn}</label>`;
-        qList.appendChild(div);
-      });
-  }
-
-  function toggleAll(state) {
-      const cbs = document.querySelectorAll('input[name="queues"]');
-      cbs.forEach(cb => cb.checked = state);
-  }
-  function saveGroup(num) {
-      const checkboxes = document.querySelectorAll('input[name="queues"]:checked');
-      const sel = Array.from(checkboxes).map(cb => cb.value);
-      localStorage.setItem(`group_${num}`, JSON.stringify(sel));
-      alert(`Група ${num} збережена!`);
-  }
-  function loadGroup(num) {
-      const saved = localStorage.getItem(`group_${num}`);
-      if (!saved) return alert(`Група ${num} пуста.`);
-      const list = JSON.parse(saved);
-      const cbs = document.querySelectorAll('input[name="queues"]');
-      cbs.forEach(cb => cb.checked = list.includes(cb.value));
-  }
-
   function handleAddClick() { const id = document.getElementById('newQId').value; const name = document.getElementById('newQName').value; if(id && name) { const c = getCustomQueues(); c[id]=name; localStorage.setItem('customQueues', JSON.stringify(c)); openSettings(); }}
   function removeCustomQueue(id) { const c = getCustomQueues(); delete c[id]; localStorage.setItem('customQueues', JSON.stringify(c)); openSettings(); }
   function closeSettings() { settingsModal.style.display = 'none'; }
   function saveSettings() {
       const fd = new FormData(settingsForm);
+      // Robust save: grab checked manually
       const checkboxes = document.querySelectorAll('input[name="queues"]:checked');
       const sel = Array.from(checkboxes).map(cb => cb.value);
+      
       let order = Object.keys(getAllQueues()).filter(id => sel.includes(id));
       saveVisibleQueues(order);
+      
       localStorage.setItem('theme', fd.get('theme')); localStorage.setItem('userExt', fd.get('userExt'));
       document.body.className = fd.get('theme');
       renderAll(); closeSettings();
   }
 
+  // --- INIT ---
   document.body.className = getTheme();
   switchView(currentView);
   connectWebSocket();
