@@ -30,17 +30,13 @@
     }
 
     /* --- STATUS COLORS --- */
-    
     /* 1. GREEN (1-5) */
     .status-green { 
         background-color: #e8f5e9 !important; 
         border-left: 6px solid #2ecc71 !important; 
         color: #1b5e20 !important;
     }
-    body.dark .status-green { 
-        background-color: #1e3a23 !important; 
-        color: #c8e6c9 !important; 
-    }
+    body.dark .status-green { background-color: #1e3a23 !important; color: #c8e6c9 !important; }
 
     /* 2. ORANGE (6-10) */
     .status-orange { 
@@ -48,10 +44,7 @@
         border-left: 6px solid #f39c12 !important; 
         color: #856404 !important; 
     }
-    body.dark .status-orange { 
-        background-color: #4e3e20 !important; 
-        color: #ffda6a !important; 
-    }
+    body.dark .status-orange { background-color: #4e3e20 !important; color: #ffda6a !important; }
 
     /* 3. RED (>10) */
     .status-red { 
@@ -92,7 +85,7 @@
       border-radius: 12px; padding: 20px 22px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column;
       justify-content: space-between; transition: all 0.3s ease; min-height: 250px;
-      border-left: 6px solid #ccc; /* Default border */
+      border-left: 6px solid #ccc; 
     }
     body.dark .card { background: #2e2e2e; color: #eee; border-color: #555; }
     .card.dragging { opacity: 0.4; border: 2px dashed #999; }
@@ -122,7 +115,6 @@
     body.dark .detail-row { background-color: #252525; }
     .detail-row.open { display: table-row; }
     .detail-content { padding: 15px; max-height: 300px; overflow-y: auto; border-bottom: 1px solid #ddd; }
-    
     .badge { padding: 4px 10px; border-radius: 6px; font-weight: bold; font-size: 14px; background: #eee; color: #333;}
     body.dark .badge { background: #444; color: #ddd; }
 
@@ -184,6 +176,21 @@
     .delete-q-btn { background: none; border: none; color: #ff4444; cursor: pointer; font-size: 16px; transition: 0.2s; }
     .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
+    /* HISTORY STYLES */
+    .history-date-row { 
+        padding: 12px; background: #f8f9fa; border-bottom: 1px solid #eee; 
+        cursor: pointer; font-weight: bold; display: flex; justify-content: space-between;
+    }
+    .history-date-row:hover { background: #e9ecef; }
+    body.dark .history-date-row { background: #333; border-color: #444; }
+    body.dark .history-date-row:hover { background: #444; }
+    .history-details { display: none; padding: 10px; background: #fff; }
+    body.dark .history-details { background: #2b2b2b; }
+    .history-details.open { display: block; }
+    .h-table { width: 100%; font-size: 13px; border-collapse: collapse; }
+    .h-table th, .h-table td { padding: 6px; border-bottom: 1px solid #eee; text-align: left; }
+    body.dark .h-table th, body.dark .h-table td { border-color: #444; }
+
     /* CHEATSHEET */
     .cheatsheet { margin-top: 30px; padding: 20px; border-radius: 12px; background: #fff; display: flex; flex-wrap: wrap; gap: 40px; margin-bottom: 100px; }
     body.dark .cheatsheet { background: #2e2e2e; color: #eee; }
@@ -201,6 +208,8 @@
       <button class="btn active" id="viewGridBtn" onclick="switchView('grid')" title="Grid View">🔲</button>
       <button class="btn" id="viewListBtn" onclick="switchView('list')" title="List View">☰</button>
       <button class="btn" id="dragBtn" onclick="toggleDragMode()" title="Drag & Drop">🔒</button>
+      
+      <button class="btn" onclick="openHistory()" title="History">📊 Статистика</button>
       <button class="btn" onclick="openSettings()" title="Settings">⚙️ Налаштування</button>
   </div>
 </div>
@@ -245,25 +254,22 @@
     </div>
     
     <div class="g-stat-item" style="min-width: 180px;">
-        <span class="g-stat-label">Daily Stats (Server)</span>
-        <div style="display: flex; justify-content: space-around;">
-            <div class="stat-container">
-                <div class="g-stat-value" id="gs-today-ans" style="color: #2ecc71;">0</div>
-                <div class="g-stat-sub">Ans</div>
-                <div class="stat-tooltip" id="tip-g-ans">Loading...</div>
-            </div>
-            <div class="stat-container">
-                <div class="g-stat-value" id="gs-today-abd" style="color: #e74c3c;">0</div>
-                <div class="g-stat-sub">Abd</div>
-                <div class="stat-tooltip" id="tip-g-abd">Loading...</div>
-            </div>
-            <div class="stat-container">
-                <div class="g-stat-value" id="gs-today-sl">0%</div>
-                <div class="g-stat-sub">SL</div>
-                <div class="stat-tooltip" id="tip-g-sl">Loading...</div>
-            </div>
+        <span class="g-stat-label">Total Answered</span>
+        <div class="stat-container">
+            <div class="g-stat-value" id="gs-today-ans" style="color: #2ecc71;">0</div>
+            <div class="stat-tooltip" id="tip-g-ans">Loading...</div>
         </div>
     </div>
+</div>
+
+<div class="modal" id="historyModal">
+  <div class="modal-content" style="width: 500px;">
+    <h2>📊 Історія дзвінків</h2>
+    <div id="historyContent">Loading...</div>
+    <div class="modal-buttons">
+      <button type="button" class="btn" onclick="closeHistory()">Close</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal" id="settingsModal">
@@ -309,6 +315,7 @@
 
 <script>
   const API_URL = "https://queue-server-fbi5.onrender.com/stats"; 
+  const HISTORY_URL = "https://queue-server-fbi5.onrender.com/history";
 
   const defaultQueueNames = {
     Q700: "TrackEnsure Support", Q701: "TrackEnsure Support rus/ukr", Q801: "Callback rus/ukr", Q800: "Callback",
@@ -316,11 +323,8 @@
     Q733: "Alfa VIP", Q720: "Vista Support", Q734: "Vista VIP", Q740: "Swift Support",
     Q760: "Swift VIP", Q766: "Sharp Support", Q745: "Club Support", Q781: "Pro-TracKing Support",
     Q730: "Smart eLog Support", Q777: "KGZ",
-    // NEW ADDITIONS
-    Q910: "Alfa Support ru/ukr",
-    Q911: "Alfa Fleet Supp",
-    Q940: "Swift Support ru/ukr",
-    Q941: "Swift Fleet Supp"
+    Q910: "Alfa Support ru/ukr", Q911: "Alfa Fleet Supp",
+    Q940: "Swift Support ru/ukr", Q941: "Swift Fleet Supp"
   };
 
   let currentView = localStorage.getItem('viewMode') || 'grid';
@@ -338,6 +342,8 @@
   const listBody = document.getElementById('listBody');
   const settingsModal = document.getElementById('settingsModal');
   const settingsForm = document.getElementById('settingsForm');
+  const historyModal = document.getElementById('historyModal');
+  const historyContent = document.getElementById('historyContent');
   const dragBtn = document.getElementById('dragBtn');
 
   function getLang() { return localStorage.getItem('lang') || 'ua'; }
@@ -345,27 +351,34 @@
   function getUserExt() { return localStorage.getItem('userExt') || ''; }
   function getCustomQueues() { return JSON.parse(localStorage.getItem('customQueues') || '{}'); }
   function getAllQueues() { return { ...defaultQueueNames, ...getCustomQueues() }; }
-  function loadVisibleQueues() { return JSON.parse(localStorage.getItem('visibleQueues') || JSON.stringify(Object.keys(getAllQueues()))); }
+  
+  function loadVisibleQueues() { 
+      const raw = localStorage.getItem('visibleQueues');
+      let parsed = [];
+      try { parsed = JSON.parse(raw); } catch(e) {}
+      if (!parsed || !Array.isArray(parsed) || parsed.length === 0) return Object.keys(getAllQueues());
+      return parsed;
+  }
   function saveVisibleQueues(list) { localStorage.setItem('visibleQueues', JSON.stringify(list)); }
+
   function formatTime(seconds) { const m = String(Math.floor(seconds / 60)).padStart(2, '0'); const s = String(seconds % 60).padStart(2, '0'); return `${m}:${s}`; }
-  function getQStats(qid) {
-      if (!fullStats.daily.queues || !fullStats.daily.queues[qid]) return { ans: 0, abd: 0, sl_hits: 0 };
-      return fullStats.daily.queues[qid];
-  }
-  function detectLanguage(name) { 
-      if (!name) return "?";
-      const u = name.toUpperCase(); 
-      if (u.includes("UKR")) return "ukr"; 
-      if (u.includes("RU")) return "ru"; 
-      if (u.includes("EN")) return "en"; 
-      return "?"; 
-  }
-  function detectName(raw) { 
-      if (!raw) return "";
-      const idx = raw.lastIndexOf(":"); 
-      return idx === -1 ? raw : raw.slice(idx + 1).trim(); 
+  function formatSecToHHMM(seconds) {
+      if (!seconds) return "0s";
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      const s = seconds % 60;
+      if (h > 0) return `${h}h ${m}m`;
+      return `${m}m ${s}s`;
   }
 
+  function getQStats(qid) {
+      if (!fullStats.daily.queues || !fullStats.daily.queues[qid]) return { ans: 0 };
+      return fullStats.daily.queues[qid];
+  }
+  function detectLanguage(name) { if (!name) return "?"; const u = name.toUpperCase(); if (u.includes("UKR")) return "ukr"; if (u.includes("RU")) return "ru"; if (u.includes("EN")) return "en"; return "?"; }
+  function detectName(raw) { if (!raw) return ""; const idx = raw.lastIndexOf(":"); return idx === -1 ? raw : raw.slice(idx + 1).trim(); }
+
+  // --- FETCH STATS ---
   async function fetchStatsOnly() {
       try {
           const res = await fetch(API_URL);
@@ -384,34 +397,80 @@
   setInterval(fetchStatsOnly, 10000); 
   fetchStatsOnly();
 
+  // --- HISTORY LOGIC ---
+  async function openHistory() {
+      historyModal.style.display = 'flex';
+      historyContent.innerHTML = 'Завантаження...';
+      try {
+          const res = await fetch(HISTORY_URL);
+          if (!res.ok) throw new Error("Err");
+          const historyData = await res.json();
+          renderHistory(historyData);
+      } catch (e) {
+          historyContent.innerHTML = "Немає даних або помилка з'єднання.";
+      }
+  }
+  
+  function closeHistory() { historyModal.style.display = 'none'; }
+
+  function renderHistory(data) {
+      const dates = Object.keys(data).sort((a,b) => new Date(b) - new Date(a));
+      if (dates.length === 0) { historyContent.innerHTML = "Історія пуста."; return; }
+      
+      let html = '';
+      dates.forEach(dateStr => {
+          const dayData = data[dateStr];
+          const totalAns = dayData.total ? dayData.total.ans : 0;
+          const totalWait = dayData.total ? dayData.total.wait : 0;
+          const avgWait = totalAns > 0 ? Math.round(totalWait / totalAns) : 0;
+          
+          html += `
+            <div class="history-date-row" onclick="toggleHistoryDetails('${dateStr}')">
+                <span>📅 ${dateStr}</span>
+                <span>Ans: ${totalAns} | Avg Wait: ${formatSecToHHMM(avgWait)}</span>
+            </div>
+            <div id="hist-${dateStr}" class="history-details">
+                <table class="h-table">
+                    <thead><tr><th>Hour</th><th>Ans</th><th>Avg Wait</th></tr></thead>
+                    <tbody>
+          `;
+          
+          const hours = Object.keys(dayData.hours || {}).sort((a,b) => Number(a) - Number(b));
+          hours.forEach(h => {
+              const hData = dayData.hours[h];
+              const hAvg = hData.ans > 0 ? Math.round(hData.wait / hData.ans) : 0;
+              html += `<tr>
+                  <td>${h}:00 - ${h}:59</td>
+                  <td>${hData.ans}</td>
+                  <td>${formatSecToHHMM(hAvg)}</td>
+              </tr>`;
+          });
+          html += `</tbody></table></div>`;
+      });
+      historyContent.innerHTML = html;
+  }
+  
+  window.toggleHistoryDetails = function(id) {
+      const el = document.getElementById(`hist-${id}`);
+      if (el) el.classList.toggle('open');
+  }
+
+  // --- TOOLTIP & STATS LOGIC ---
   function getTooltipHTML(type, qid) {
       const source = qid ? (fullStats.queuesPeriods[qid] || {}) : fullStats.globalPeriods;
-      const h1 = source.h1 || { ans: 0, abd: 0, sl: 0 };
-      const h2 = source.h2 || { ans: 0, abd: 0, sl: 0 };
-      const h4 = source.h4 || { ans: 0, abd: 0, sl: 0 };
-      const val = (obj) => type === 'sl' ? obj[type] + '%' : obj[type];
-      return `1h: <b>${val(h1)}</b><br>2h: <b>${val(h2)}</b><br>4h: <b>${val(h4)}</b>`;
+      const h1 = source.h1 || { ans: 0 };
+      const h2 = source.h2 || { ans: 0 };
+      const h4 = source.h4 || { ans: 0 };
+      return `1h: <b>${h1.ans}</b><br>2h: <b>${h2.ans}</b><br>4h: <b>${h4.ans}</b>`;
   }
 
   function updateStatLabels(prefix, qid) {
       const stats = getQStats(qid);
-      const slPercent = stats.ans > 0 ? Math.round((stats.sl_hits / stats.ans) * 100) : 0;
-
       const elAns = document.getElementById(`${prefix}ans-${qid}`);
-      const elAbd = document.getElementById(`${prefix}abd-${qid}`);
-      const elSl = document.getElementById(`${prefix}sl-${qid}`);
-      
       if(elAns) elAns.textContent = stats.ans;
-      if(elAbd) elAbd.textContent = stats.abd;
-      if(elSl) elSl.textContent = slPercent + '%';
 
       const tipAns = document.getElementById(`${prefix}tip-ans-${qid}`);
-      const tipAbd = document.getElementById(`${prefix}tip-abd-${qid}`);
-      const tipSl = document.getElementById(`${prefix}tip-sl-${qid}`);
-
       if(tipAns) tipAns.innerHTML = getTooltipHTML('ans', qid);
-      if(tipAbd) tipAbd.innerHTML = getTooltipHTML('abd', qid);
-      if(tipSl) tipSl.innerHTML = getTooltipHTML('sl', qid);
   }
 
   function updateGlobalSummary() {
@@ -433,20 +492,12 @@
       mhEl.textContent = formatTime(maxHold);
       if(maxHold >= 600) mhEl.classList.add('alert'); else mhEl.classList.remove('alert');
 
-      let totalAns = 0; let totalAbd = 0; let totalSLHits = 0;
-      if (fullStats.daily.queues) {
-          Object.values(fullStats.daily.queues).forEach(s => {
-              totalAns += s.ans; totalAbd += s.abd; totalSLHits += s.sl_hits;
-          });
-      }
-      const totalSlPercent = totalAns > 0 ? Math.round((totalSLHits / totalAns) * 100) : 0;
+      let totalAns = 0;
+      if (fullStats.globalDaily) totalAns = fullStats.globalDaily.ans;
+      else if (fullStats.daily.queues) Object.values(fullStats.daily.queues).forEach(s => { totalAns += s.ans; });
+      
       document.getElementById('gs-today-ans').textContent = totalAns;
-      document.getElementById('gs-today-abd').textContent = totalAbd;
-      document.getElementById('gs-today-sl').textContent = totalSlPercent + '%';
-
       document.getElementById('tip-g-ans').innerHTML = getTooltipHTML('ans', null);
-      document.getElementById('tip-g-abd').innerHTML = getTooltipHTML('abd', null);
-      document.getElementById('tip-g-sl').innerHTML = getTooltipHTML('sl', null);
 
       const top3Container = document.getElementById('gs-top3');
       if (busyList.length === 0) {
@@ -457,49 +508,12 @@
       }
   }
 
-  function switchView(mode) {
-      currentView = mode; localStorage.setItem('viewMode', mode);
-      const gridBtn = document.getElementById('viewGridBtn'); const listBtn = document.getElementById('viewListBtn');
-      if (mode === 'grid') {
-          gridEl.classList.remove('hidden'); listEl.classList.add('hidden');
-          gridBtn.classList.add('active'); listBtn.classList.remove('active');
-          dragBtn.style.display = 'inline-flex';
-      } else {
-          gridEl.classList.add('hidden'); listEl.classList.remove('hidden');
-          gridBtn.classList.remove('active'); listBtn.classList.add('active');
-          dragBtn.style.display = 'none'; isDragEnabled = false; updateDragUI();
-      }
-      renderAll();
-  }
-
-  function renderAll() {
-      const visibleQueues = loadVisibleQueues(); const allQueues = getAllQueues();
-      gridEl.innerHTML = ''; listBody.innerHTML = '';
-      visibleQueues.forEach(qid => {
-          const name = allQueues[qid] || qid;
-          const data = queuesData[qid] || { queued_calls: 0, logged_in: "-", available: "-", hold: 0 };
-          gridEl.appendChild(createCard(qid, name, data));
-          const { mainRow, detailRow } = createListRow(qid, name, data);
-          listBody.appendChild(mainRow); listBody.appendChild(detailRow);
-          updateCallersList(qid);
-      });
-      updateGlobalSummary();
-  }
-
-  /* --- UPDATE BLOCK COLORS (LOGIC FIX) --- */
   function updateBlockColor(element, count) {
       const n = Number(count);
-      // Clean previous
       element.classList.remove('status-green', 'status-orange', 'status-red');
-      
-      if (n > 10) {
-          element.classList.add('status-red');
-      } else if (n >= 6) {
-          element.classList.add('status-orange');
-      } else if (n >= 1) {
-          element.classList.add('status-green'); 
-      }
-      // n == 0 => no class => default gray/white
+      if (n > 10) element.classList.add('status-red');
+      else if (n >= 6) element.classList.add('status-orange');
+      else if (n >= 1) element.classList.add('status-green'); 
   }
 
   function createCard(qid, name, data) {
@@ -536,10 +550,7 @@
         </div>
       `;
       setTimeout(() => updateStatLabels('ls-', qid), 0);
-      
-      // Apply initial color
       updateBlockColor(card, data.queued_calls);
-      
       return card;
   }
 
@@ -569,10 +580,7 @@
       const detailTr = document.createElement('tr'); detailTr.className = 'detail-row'; detailTr.id = `detail-${qid}`;
       detailTr.innerHTML = `<td colspan="5" style="padding:0;"><div class="detail-content"><div class="callers-list" id="l-callers-${qid}"></div></div></td>`;
       setTimeout(() => updateStatLabels('l-', qid), 0);
-      
-      // Apply initial color
       updateBlockColor(tr, data.queued_calls);
-      
       return { mainRow: tr, detailRow: detailTr };
   }
 
@@ -594,8 +602,6 @@
           document.getElementById(`logged-${qid}`).textContent = d.logged_in;
           document.getElementById(`avail-${qid}`).textContent = d.available;
           updateStatLabels('ls-', qid);
-          
-          // Force update color
           updateBlockColor(card, d.queued_calls);
       }
       const row = document.getElementById(`row-${qid}`);
@@ -605,8 +611,6 @@
           document.getElementById(`l-logged-${qid}`).textContent = d.logged_in;
           document.getElementById(`l-avail-${qid}`).textContent = d.available;
           updateStatLabels('l-', qid);
-          
-          // Force update color
           updateBlockColor(row, d.queued_calls);
       }
       handleTimer(qid, d.hold, d.queued_calls); updateGlobalSummary();
@@ -643,12 +647,7 @@
   function handleDragOver(e) { if (isDragEnabled) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } return false; }
   function handleDragEnter(e) { if(isDragEnabled) this.classList.add('over'); }
   function handleDragLeave(e) { this.classList.remove('over'); }
-  function handleDrop(e) { if (!isDragEnabled) return; if (e.stopPropagation) e.stopPropagation(); this.classList.remove('over');
-      if (dragSrcEl !== this) {
-          const srcId = dragSrcEl.id.replace('card-', ''); const targetId = this.id.replace('card-', '');
-          const list = loadVisibleQueues(); const from = list.indexOf(srcId); const to = list.indexOf(targetId);
-          if (from > -1 && to > -1) { list.splice(from, 1); list.splice(to, 0, srcId); saveVisibleQueues(list); renderAll(); }
-      } return false; }
+  function handleDrop(e) { if (!isDragEnabled) return; if (e.stopPropagation) e.stopPropagation(); this.classList.remove('over'); if (dragSrcEl !== this) { const srcId = dragSrcEl.id.replace('card-', ''); const targetId = this.id.replace('card-', ''); const list = loadVisibleQueues(); const from = list.indexOf(srcId); const to = list.indexOf(targetId); if (from > -1 && to > -1) { list.splice(from, 1); list.splice(to, 0, srcId); saveVisibleQueues(list); renderAll(); } } return false; }
   function handleDragEnd(e) { this.classList.remove('dragging'); this.classList.remove('over'); document.querySelectorAll('.card').forEach(c => { c.classList.remove('over'); c.classList.remove('dragging'); }); }
   let dragSrcEl = null;
 
@@ -667,15 +666,12 @@
           if (type === 'queue_times') updateQueueData(d.queue, d);
           if (type === 'queue_caller_join') {
             const { queue, position } = d;
-            
-            // Aggressive number finding
             const number = d.connectedlinenum || d.calleridnum || d.caller_number || "";
             const rawName = d.connectedlinename || d.calleridname || d.caller_name || "";
             const cleanName = detectName(rawName);
             const lang = detectLanguage(rawName);
             let displayText = "—";
             if (number && cleanName) displayText = `${number} (${cleanName})`; else if (number) displayText = number; else if (cleanName) displayText = cleanName;
-            
             if (queue && position) {
                 if (!queueCallers[queue]) queueCallers[queue] = [];
                 if (number) queueCallers[queue] = queueCallers[queue].filter(c => c.number !== number);
@@ -698,6 +694,7 @@
     socket.onclose = () => { statusEl.textContent = "🔌 З'єднання втрачено..."; setTimeout(connectWebSocket, 5000); };
   }
 
+  // --- SETTINGS ---
   function openSettings() {
     settingsForm.innerHTML = `
       <div class="settings-group"><strong>Ваш Extension:</strong><input type="text" name="userExt" value="${getUserExt()}" placeholder="101"></div>
@@ -730,6 +727,7 @@
       renderAll(); closeSettings();
   }
 
+  // --- INIT ---
   document.body.className = getTheme();
   switchView(currentView);
   connectWebSocket();
