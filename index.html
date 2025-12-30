@@ -8,23 +8,19 @@
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📞</text></svg>">
 
   <style>
-    /* GLOBAL */
+    /* RESET */
     * { box-sizing: border-box; }
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       padding: 20px; padding-bottom: 90px; margin: 0;
       background: #f2f2f2; color: #333;
-      transition: background 0.3s; overflow-x: hidden;
+      transition: 0.3s; overflow-x: hidden;
     }
     body.dark { background: #1e1e1e; color: #ddd; }
     .hidden { display: none !important; }
     
-    /* ANIMATIONS */
-    @keyframes pulse-red { 
-        0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 
-        70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); } 
-        100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } 
-    }
+    /* ANIMATION */
+    @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
 
     /* STATUS COLORS */
     .status-green { background-color: #e8f5e9 !important; border-left: 6px solid #2ecc71 !important; color: #1b5e20 !important; }
@@ -94,17 +90,18 @@
     .accept-btn { color: #28a745; } 
     .status-red .accept-btn { color: #fff; background: rgba(255,255,255,0.2); }
 
-    /* TOOLTIPS & GLOBAL BAR */
+    /* TOOLTIPS */
     .stat-container { position: relative; display: inline-block; cursor: help; }
     .stat-tooltip {
-        visibility: hidden; width: 140px; background-color: rgba(0,0,0,0.9); color: #fff; text-align: left;
+        visibility: hidden; width: 150px; background-color: rgba(0,0,0,0.9); color: #fff; text-align: left;
         border-radius: 6px; padding: 10px; position: absolute; z-index: 9999;
-        bottom: 125%; left: 50%; margin-left: -70px; opacity: 0; transition: 0.3s;
+        bottom: 125%; left: 50%; margin-left: -75px; opacity: 0; transition: 0.3s;
         font-size: 12px; line-height: 1.5; pointer-events: none;
     }
     .stat-tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: rgba(0,0,0,0.9) transparent transparent transparent; }
     .stat-container:hover .stat-tooltip { visibility: visible; opacity: 1; }
 
+    /* GLOBAL BAR */
     .global-stats {
         position: fixed; bottom: 0; left: 0; right: 0;
         background: #2c3e50; color: white;
@@ -129,9 +126,9 @@
     .top-list { font-size: 12px; text-align: left; display: inline-block; }
     .top-count { color: #ff6b6b; font-weight: bold; margin-right: 5px; }
 
-    /* MODALS */
+    /* MODAL */
     .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: none; justify-content: center; align-items: center; z-index: 3000; }
-    .modal-content { background: white; padding: 20px; border-radius: 12px; width: 450px; max-height: 90vh; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+    .modal-content { background: white; padding: 20px; border-radius: 12px; width: 450px; max-height: 85vh; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
     body.dark .modal-content { background: #2b2b2b; color: #eee; }
     .settings-group { margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 15px; }
     body.dark .settings-group { border-color: #444; }
@@ -141,7 +138,7 @@
     .delete-q-btn { background: none; border: none; color: #ff4444; cursor: pointer; font-size: 16px; transition: 0.2s; }
     .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 
-    /* HISTORY STYLES */
+    /* HISTORY CSS */
     .history-date-row { padding: 12px; background: #f8f9fa; border-bottom: 1px solid #eee; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; }
     .history-date-row:hover { background: #e9ecef; }
     body.dark .history-date-row { background: #333; border-color: #444; }
@@ -188,7 +185,7 @@
         <th style="width: 15%">Wait</th>
         <th style="width: 10%">Count</th>
         <th style="width: 25%">Agents</th>
-        <th style="width: 15%">Ans</th>
+        <th style="width: 15%">Total Ans</th>
       </tr>
     </thead>
     <tbody id="listBody"></tbody>
@@ -226,7 +223,7 @@
 
 <div class="modal" id="historyModal">
   <div class="modal-content" style="width: 550px;">
-    <h2>📊 Історія дзвінків</h2>
+    <h2>📊 Історія дзвінків (Global)</h2>
     <div id="historyContent" style="min-height: 100px;">Завантаження...</div>
     <div class="modal-buttons">
       <button type="button" class="btn" onclick="closeHistory()">Close</button>
@@ -276,6 +273,7 @@
 </div>
 
 <script>
+  // ССЫЛКА НА БЭКЕНД
   const API_URL = "https://queue-server-fbi5.onrender.com/stats"; 
   const HISTORY_URL = "https://queue-server-fbi5.onrender.com/history";
 
@@ -296,6 +294,7 @@
   const queuesData = {};   
   const timers = {};       
   
+  // Realtime stats
   let fullStats = { 
       daily: { queues: {} }, 
       queuesPeriods: {}, 
@@ -305,6 +304,7 @@
 
   const statusEl = document.getElementById('status');
   const gridEl = document.getElementById('queuesGrid');
+  const listEl = document.getElementById('queuesList');
   const listBody = document.getElementById('listBody');
   const settingsModal = document.getElementById('settingsModal');
   const settingsForm = document.getElementById('settingsForm');
@@ -312,12 +312,12 @@
   const historyContent = document.getElementById('historyContent');
   const dragBtn = document.getElementById('dragBtn');
 
+  // HELPERS
   function getLang() { return localStorage.getItem('lang') || 'ua'; }
   function getTheme() { return localStorage.getItem('theme') || 'light'; }
   function getUserExt() { return localStorage.getItem('userExt') || ''; }
   function getCustomQueues() { return JSON.parse(localStorage.getItem('customQueues') || '{}'); }
   function getAllQueues() { return { ...defaultQueueNames, ...getCustomQueues() }; }
-  
   function loadVisibleQueues() { 
       const raw = localStorage.getItem('visibleQueues');
       let parsed = [];
@@ -326,40 +326,41 @@
       return parsed;
   }
   function saveVisibleQueues(list) { localStorage.setItem('visibleQueues', JSON.stringify(list)); }
-
   function formatTime(seconds) { const m = String(Math.floor(seconds / 60)).padStart(2, '0'); const s = String(seconds % 60).padStart(2, '0'); return `${m}:${s}`; }
+  
+  // FORMAT FOR WAIT TIME
   function formatSecToHHMM(seconds) {
       if (!seconds) return "0s";
       const h = Math.floor(seconds / 3600);
       const m = Math.floor((seconds % 3600) / 60);
       const s = seconds % 60;
       if (h > 0) return `${h}h ${m}m`;
-      return `${m}m ${s}s`;
+      if (m > 0) return `${m}m ${s}s`;
+      return `${s}s`;
   }
 
   function getQStats(qid) {
-      if (fullStats.queuesPeriods && fullStats.queuesPeriods[qid]) {
-          // Placeholder for daily if needed
-          return { ans: 0 };
-      }
+      // Placeholder for specific queue stats if needed
       return { ans: 0 };
   }
   function detectLanguage(name) { if (!name) return "?"; const u = name.toUpperCase(); if (u.includes("UKR")) return "ukr"; if (u.includes("RU")) return "ru"; if (u.includes("EN")) return "en"; return "?"; }
   function detectName(raw) { if (!raw) return ""; const idx = raw.lastIndexOf(":"); return idx === -1 ? raw : raw.slice(idx + 1).trim(); }
 
-  // --- FETCH STATS ---
+  // FETCH STATS
   async function fetchStatsOnly() {
       try {
           const res = await fetch(API_URL);
           if (res.ok) {
               const data = await res.json();
-              fullStats = data; 
-              updateGlobalSummary(); 
-              const allQ = Object.keys(getAllQueues());
-              allQ.forEach(qid => {
-                  updateStatLabels('ls-', qid); 
-                  updateStatLabels('l-', qid);
-              });
+              if (data && !data.error) {
+                  fullStats = data; 
+                  updateGlobalSummary(); 
+                  const allQ = Object.keys(getAllQueues());
+                  allQ.forEach(qid => {
+                      updateStatLabels('ls-', qid); 
+                      updateStatLabels('l-', qid);
+                  });
+              }
           }
       } catch (e) { console.warn("Stats fetch failed", e); }
   }
@@ -376,10 +377,9 @@
           const historyData = await res.json();
           renderHistory(historyData);
       } catch (e) {
-          historyContent.innerHTML = "Немає даних або помилка з'єднання (оновіть сервер!).";
+          historyContent.innerHTML = "Немає даних або помилка з'єднання.";
       }
   }
-  
   function closeHistory() { historyModal.style.display = 'none'; }
 
   function renderHistory(data) {
@@ -392,13 +392,14 @@
           const totalAns = dayData.total ? dayData.total.ans : 0;
           const totalWait = dayData.total ? dayData.total.wait : 0;
           const avgWait = totalAns > 0 ? Math.round(totalWait / totalAns) : 0;
+          const safeId = dateStr.replace(/[^a-zA-Z0-9]/g, '-');
           
           html += `
-            <div class="history-date-row" onclick="toggleHistoryDetails('${dateStr.replace(/\//g, '-')}')">
+            <div class="history-date-row" onclick="toggleHistoryDetails('${safeId}')">
                 <span>📅 ${dateStr}</span>
                 <span>Ans: ${totalAns} | Avg Wait: ${formatSecToHHMM(avgWait)}</span>
             </div>
-            <div id="hist-${dateStr.replace(/\//g, '-')}" class="history-details">
+            <div id="hist-${safeId}" class="history-details">
                 <table class="h-table">
                     <thead><tr><th>Hour</th><th>Ans</th><th>Avg Wait</th></tr></thead>
                     <tbody>
@@ -424,14 +425,18 @@
       if (el) el.classList.toggle('open');
   }
 
-  // --- TOOLTIPS & STATS ---
+  // --- TOOLTIP ---
   function getTooltipHTML(type, qid) {
+      // Logic for displaying Total Wait Time per period
       const source = qid ? (fullStats.queuesPeriods[qid] || {}) : fullStats.globalPeriods;
       const h1 = source.h1 || { ans: 0, wait: 0 };
       const h2 = source.h2 || { ans: 0, wait: 0 };
       const h4 = source.h4 || { ans: 0, wait: 0 };
+      
+      // Calculate Average or just Sum? User asked for "Total Wait"
+      // Displaying SUM:
       return `
-        <div style="margin-bottom:4px; border-bottom:1px solid #555; padding-bottom:2px"><b>Wait Time (Sum)</b></div>
+        <div style="margin-bottom:4px; border-bottom:1px solid #555; padding-bottom:2px"><b>Total Wait Time</b></div>
         1h: <b>${formatSecToHHMM(h1.wait)}</b> <span style="opacity:0.7">(${h1.ans})</span><br>
         2h: <b>${formatSecToHHMM(h2.wait)}</b> <span style="opacity:0.7">(${h2.ans})</span><br>
         4h: <b>${formatSecToHHMM(h4.wait)}</b> <span style="opacity:0.7">(${h4.ans})</span>
@@ -439,7 +444,7 @@
   }
 
   function updateStatLabels(prefix, qid) {
-      // Trying to get queue specific daily total (approximated by 4h or wait for better server logic)
+      // Use 4h count as proxy for queue daily count in this simple setup
       let ansVal = 0;
       if (fullStats.queuesPeriods && fullStats.queuesPeriods[qid]) {
           ansVal = fullStats.queuesPeriods[qid].h4.ans; 
@@ -484,7 +489,6 @@
       }
   }
 
-  // --- COLORS ---
   function updateBlockColor(element, count) {
       const n = Number(count);
       element.classList.remove('status-green', 'status-orange', 'status-red');
@@ -493,7 +497,6 @@
       else if (n >= 1) element.classList.add('status-green'); 
   }
 
-  // --- UI CREATION ---
   function createCard(qid, name, data) {
       const card = document.createElement('div');
       card.className = 'card'; card.id = `card-${qid}`; card.setAttribute('draggable', isDragEnabled);
@@ -548,7 +551,6 @@
       return { mainRow: tr, detailRow: detailTr };
   }
 
-  // --- ACTIONS ---
   function switchView(mode) {
       currentView = mode; localStorage.setItem('viewMode', mode);
       const gridBtn = document.getElementById('viewGridBtn'); const listBtn = document.getElementById('viewListBtn');
@@ -646,8 +648,6 @@
           if (type === 'queue_times') updateQueueData(d.queue, d);
           if (type === 'queue_caller_join') {
             const { queue, position } = d;
-            
-            // Aggressive number finding
             const number = d.connectedlinenum || d.calleridnum || d.caller_number || "";
             const rawName = d.connectedlinename || d.calleridname || d.caller_name || "";
             const cleanName = detectName(rawName);
@@ -690,8 +690,7 @@
       const isCustom = custom.hasOwnProperty(qid);
       const delBtn = isCustom ? `<button class="delete-q-btn" onclick="event.preventDefault(); removeCustomQueue('${qid}')">🗑️</button>` : '';
       const div = document.createElement('div');
-      const isChecked = visible.includes(qid) ? 'checked' : '';
-      div.innerHTML = `<label><span><input type="checkbox" name="queues" value="${qid}" ${isChecked}> ${qid} - ${name} ${isCustom?'(Custom)':''}</span>${delBtn}</label>`;
+      div.innerHTML = `<label><span><input type="checkbox" name="queues" value="${qid}" ${visible.includes(qid) ? 'checked' : ''}> ${qid} - ${name} ${isCustom?'(Custom)':''}</span>${delBtn}</label>`;
       qList.appendChild(div);
     });
     settingsModal.style.display = 'flex';
@@ -701,9 +700,9 @@
   function closeSettings() { settingsModal.style.display = 'none'; }
   function saveSettings() {
       const fd = new FormData(settingsForm);
-      const checkboxes = document.querySelectorAll('input[name="queues"]:checked');
-      const sel = Array.from(checkboxes).map(cb => cb.value);
-      let order = Object.keys(getAllQueues()).filter(id => sel.includes(id));
+      const sel = fd.getAll('queues');
+      let order = loadVisibleQueues().filter(id => sel.includes(id));
+      sel.forEach(id => { if(!order.includes(id)) order.push(id); });
       saveVisibleQueues(order);
       localStorage.setItem('theme', fd.get('theme')); localStorage.setItem('userExt', fd.get('userExt'));
       document.body.className = fd.get('theme');
