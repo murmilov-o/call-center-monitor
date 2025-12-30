@@ -25,19 +25,27 @@
     /* ANIMATIONS */
     @keyframes pulse-red { 
         0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 
-        70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); } 
+        70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); } 
         100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } 
     }
 
-    /* --- STATUS COLORS (CARD & ROW) --- */
+    /* --- STATUS COLORS (IMPORTANT to override default card bg) --- */
     
-    /* 1. GREEN (0-5) - Default / Calm */
-    .status-green { border-left: 5px solid #2ecc71; }
-    
-    /* 2. ORANGE (6-10) - Warning */
+    /* 1. GREEN (0-5) */
+    .status-green { 
+        background-color: #e8f5e9 !important; /* Легкий зеленый фон */
+        border-left: 6px solid #2ecc71 !important; 
+        color: #1b5e20 !important;
+    }
+    body.dark .status-green { 
+        background-color: #1e3a23 !important; 
+        color: #c8e6c9 !important; 
+    }
+
+    /* 2. ORANGE (6-10) */
     .status-orange { 
         background-color: #fff3cd !important; 
-        border-left: 5px solid #f39c12; 
+        border-left: 6px solid #f39c12 !important; 
         color: #856404 !important; 
     }
     body.dark .status-orange { 
@@ -49,10 +57,14 @@
     .status-red { 
         background-color: #e74c3c !important; 
         color: white !important; 
-        border-left: 5px solid #c0392b; 
-        animation: pulse-red 2s infinite;
+        border-left: 6px solid #c0392b !important; 
+        animation: pulse-red 1.5s infinite;
     }
-    .status-red .queue-id, .status-red .local-stats-block { color: rgba(255,255,255,0.8) !important; }
+    /* Fix text colors inside red card */
+    .status-red .queue-id, .status-red .local-stats-block, .status-red .queue-info-block { 
+        color: rgba(255,255,255,0.9) !important; 
+        border-color: rgba(255,255,255,0.3) !important;
+    }
     .status-red .badge { background: white; color: #c0392b; }
     
     /* --- COMPONENTS --- */
@@ -77,12 +89,13 @@
     /* GRID */
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; width: 100%; }
     .card {
-      background: white; border-radius: 12px; padding: 20px 22px;
+      background: white; /* Default BG */
+      border-radius: 12px; padding: 20px 22px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column;
       justify-content: space-between; transition: all 0.3s ease; min-height: 250px;
-      border-left: 5px solid transparent; /* Placeholder for status border */
+      border-left: 6px solid #ccc; /* Default border */
     }
-    body.dark .card { background: #2e2e2e; color: #eee; }
+    body.dark .card { background: #2e2e2e; color: #eee; border-color: #555; }
     .card.dragging { opacity: 0.4; border: 2px dashed #999; }
     
     .queue-name { font-weight: bold; font-size: 18px; margin-bottom: 4px; pointer-events: none; }
@@ -102,7 +115,7 @@
     td { padding: 12px 15px; border-bottom: 1px solid #eee; vertical-align: middle; font-size: 15px; }
     body.dark td { border-color: #444; }
     
-    .queue-row { cursor: pointer; transition: background 0.1s; border-left: 5px solid transparent; }
+    .queue-row { cursor: pointer; transition: background 0.1s; border-left: 6px solid transparent; }
     .queue-row:hover { background-color: #f0f0f0; }
     body.dark .queue-row:hover { background-color: #383838; }
     
@@ -187,10 +200,10 @@
 <div class="top-bar">
   <h1>📞 Активні черги</h1>
   <div class="controls">
-      <button class="btn active" id="viewGridBtn" onclick="switchView('grid')">🔲</button>
-      <button class="btn" id="viewListBtn" onclick="switchView('list')">☰</button>
-      <button class="btn" id="dragBtn" onclick="toggleDragMode()">🔒</button>
-      <button class="btn" onclick="openSettings()">⚙️ Налаштування</button>
+      <button class="btn active" id="viewGridBtn" onclick="switchView('grid')" title="Grid View">🔲</button>
+      <button class="btn" id="viewListBtn" onclick="switchView('list')" title="List View">☰</button>
+      <button class="btn" id="dragBtn" onclick="toggleDragMode()" title="Drag & Drop">🔒</button>
+      <button class="btn" onclick="openSettings()" title="Settings">⚙️ Налаштування</button>
   </div>
 </div>
 
@@ -304,7 +317,12 @@
     Q791: "TrackEnsure New", Q750: "VIP Queue", Q702: "Fleet Supp", Q710: "Alfa Support",
     Q733: "Alfa VIP", Q720: "Vista Support", Q734: "Vista VIP", Q740: "Swift Support",
     Q760: "Swift VIP", Q766: "Sharp Support", Q745: "Club Support", Q781: "Pro-TracKing Support",
-    Q730: "Smart eLog Support", Q777: "KGZ"
+    Q730: "Smart eLog Support", Q777: "KGZ",
+    // NEW ADDITIONS
+    Q910: "Alfa Support ru/ukr",
+    Q911: "Alfa Fleet Supp",
+    Q940: "Swift Support ru/ukr",
+    Q941: "Swift Fleet Supp"
   };
 
   let currentView = localStorage.getItem('viewMode') || 'grid';
@@ -470,10 +488,10 @@
       updateGlobalSummary();
   }
 
-  /* --- UPDATE BLOCK COLORS --- */
+  /* --- UPDATE BLOCK COLORS (MAIN LOGIC) --- */
   function updateBlockColor(element, count) {
       const n = Number(count);
-      // Remove all status classes
+      // Clean previous
       element.classList.remove('status-green', 'status-orange', 'status-red');
       
       if (n > 10) {
@@ -520,7 +538,7 @@
       `;
       setTimeout(() => updateStatLabels('ls-', qid), 0);
       
-      // Initial Color Set
+      // Apply initial color
       updateBlockColor(card, data.queued_calls);
       
       return card;
@@ -553,7 +571,7 @@
       detailTr.innerHTML = `<td colspan="5" style="padding:0;"><div class="detail-content"><div class="callers-list" id="l-callers-${qid}"></div></div></td>`;
       setTimeout(() => updateStatLabels('l-', qid), 0);
       
-      // Initial Color Set
+      // Apply initial color
       updateBlockColor(tr, data.queued_calls);
       
       return { mainRow: tr, detailRow: detailTr };
@@ -578,7 +596,7 @@
           document.getElementById(`avail-${qid}`).textContent = d.available;
           updateStatLabels('ls-', qid);
           
-          // Update Card Color
+          // Force update color
           updateBlockColor(card, d.queued_calls);
       }
       const row = document.getElementById(`row-${qid}`);
@@ -589,7 +607,7 @@
           document.getElementById(`l-avail-${qid}`).textContent = d.available;
           updateStatLabels('l-', qid);
           
-          // Update Row Color
+          // Force update color
           updateBlockColor(row, d.queued_calls);
       }
       handleTimer(qid, d.hold, d.queued_calls); updateGlobalSummary();
