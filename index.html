@@ -335,7 +335,7 @@
   
   const queueCallers = {}; 
   const queuesData = {};   
-  const timers = {};       
+  const timers = {};        
   
   let fullStats = { daily: { queues: {} }, queuesPeriods: {}, globalPeriods: { h1:{}, h2:{}, h4:{} } };
 
@@ -493,10 +493,9 @@
       updateGlobalSummary();
   }
 
-  /* --- UPDATE BLOCK COLORS (LOGIC FIX) --- */
+  /* --- UPDATE BLOCK COLORS --- */
   function updateBlockColor(element, count) {
       const n = Number(count);
-      // Clean previous
       element.classList.remove('status-green', 'status-orange', 'status-red');
       
       if (n > 10) {
@@ -506,7 +505,6 @@
       } else if (n >= 1) {
           element.classList.add('status-green'); 
       }
-      // n == 0 => no class => default gray/white
   }
 
   function createCard(qid, name, data) {
@@ -517,6 +515,7 @@
 
       const holdClass = getHoldColorClass(data.hold);
       
+      // Removed Abd and SL stats
       card.innerHTML = `
         <div class="queue-name">${name}</div>
         <div class="queue-id">${qid}</div>
@@ -527,14 +526,6 @@
                 <span>Ans: <b id="ls-ans-${qid}">0</b></span>
                 <div class="stat-tooltip" id="ls-tip-ans-${qid}">...</div>
             </div>
-            <div class="stat-container">
-                <span>Abd: <b id="ls-abd-${qid}" style="color: #c0392b">0</b></span>
-                <div class="stat-tooltip" id="ls-tip-abd-${qid}">...</div>
-            </div>
-            <div class="stat-container">
-                <span>SL: <b id="ls-sl-${qid}">0%</b></span>
-                <div class="stat-tooltip" id="ls-tip-sl-${qid}">...</div>
-            </div>
         </div>
         <div class="queue-info-block" style="margin-top:5px;">
           👥 Logged: <span id="logged-${qid}">${data.logged_in}</span><br>
@@ -544,7 +535,6 @@
       `;
       setTimeout(() => updateStatLabels('ls-', qid), 0);
       
-      // Apply initial color
       updateBlockColor(card, data.queued_calls);
       
       return card;
@@ -553,20 +543,13 @@
   function createListRow(qid, name, data) {
       const tr = document.createElement('tr'); tr.className = 'queue-row'; tr.id = `row-${qid}`; tr.onclick = () => toggleRow(qid);
       const holdClass = getHoldColorClass(data.hold);
+      // Removed Abd and SL stats
       tr.innerHTML = `
         <td><span class="toggle-icon">▶</span> <strong>${name}</strong> <span style="font-size:11px;color:#888;">${qid}</span></td>
         <td><span id="l-hold-${qid}" class="${holdClass}" style="font-weight:bold;">${formatTime(data.hold)}</span></td>
         <td><span class="badge" id="l-badge-${qid}">${data.queued_calls}</span></td>
         <td><span id="l-logged-${qid}">${data.logged_in}</span> / <span id="l-avail-${qid}">${data.available}</span></td>
         <td style="font-size:13px; color:#555; white-space: nowrap;">
-            <div class="stat-container">
-                SL: <span id="l-sl-${qid}" style="font-weight:bold">0%</span>
-                <div class="stat-tooltip" id="l-tip-sl-${qid}">...</div>
-            </div> | 
-            <div class="stat-container">
-                Abd: <span id="l-abd-${qid}" style="color:#c0392b; font-weight:bold;">0</span>
-                <div class="stat-tooltip" id="l-tip-abd-${qid}">...</div>
-            </div> | 
             <div class="stat-container">
                 Ans: <span id="l-ans-${qid}" style="color:#27ae60; font-weight:bold;">0</span>
                 <div class="stat-tooltip" id="l-tip-ans-${qid}">...</div>
@@ -577,7 +560,6 @@
       detailTr.innerHTML = `<td colspan="5" style="padding:0;"><div class="detail-content"><div class="callers-list" id="l-callers-${qid}"></div></div></td>`;
       setTimeout(() => updateStatLabels('l-', qid), 0);
       
-      // Apply initial color
       updateBlockColor(tr, data.queued_calls);
       
       return { mainRow: tr, detailRow: detailTr };
@@ -602,7 +584,6 @@
           document.getElementById(`avail-${qid}`).textContent = d.available;
           updateStatLabels('ls-', qid);
           
-          // Force update color
           updateBlockColor(card, d.queued_calls);
       }
       const row = document.getElementById(`row-${qid}`);
@@ -613,7 +594,6 @@
           document.getElementById(`l-avail-${qid}`).textContent = d.available;
           updateStatLabels('l-', qid);
           
-          // Force update color
           updateBlockColor(row, d.queued_calls);
       }
       handleTimer(qid, d.hold, d.queued_calls); updateGlobalSummary();
@@ -680,7 +660,7 @@
   function handleDragEnd(e) { this.classList.remove('dragging'); this.classList.remove('over'); document.querySelectorAll('.card').forEach(c => { c.classList.remove('over'); c.classList.remove('dragging'); }); }
   let dragSrcEl = null;
 
-function connectWebSocket() {
+  function connectWebSocket() {
     statusEl.textContent = "🔄 Підключення...";
     const socket = new WebSocket("wss://trackensure.gitstel.net/sw-monitor/?EIO=3&transport=websocket");
     
@@ -712,22 +692,18 @@ function connectWebSocket() {
             if (queue && position) {
                 if (!queueCallers[queue]) queueCallers[queue] = [];
                 
-                // --- ВИПРАВЛЕННЯ ТАЙМЕРА (START) ---
-                // 1. Спочатку шукаємо, чи є вже цей абонент, щоб зберегти його час
+                // --- FIX TIMER: Check for existing caller to preserve joinTime ---
                 let savedJoinTime = Date.now();
                 if (number) {
                     const existingCaller = queueCallers[queue].find(c => c.number === number);
                     if (existingCaller && existingCaller.joinTime) {
                         savedJoinTime = existingCaller.joinTime;
                     }
-                    // 2. Видаляємо старий запис (щоб оновити позицію)
                     queueCallers[queue] = queueCallers[queue].filter(c => c.number !== number);
                 }
-                // --- ВИПРАВЛЕННЯ ТАЙМЕРА (END) ---
 
                 const idx = Math.max(Number(position) - 1, 0);
                 
-                // 3. Додаємо знову, але використовуємо збережений час (savedJoinTime)
                 queueCallers[queue].splice(idx, 0, { 
                     name: displayText, 
                     number, 
@@ -747,7 +723,6 @@ function connectWebSocket() {
                     if (idx >= 0) queueCallers[queue].splice(idx, 1); 
                 }
                 else {
-                    // Якщо позиція не прийшла, видаляємо першого (найчастіше це той, хто пішов)
                     queueCallers[queue].shift();
                 }
                 updateCallersList(queue);
@@ -757,11 +732,7 @@ function connectWebSocket() {
         } catch (err) { console.error(err); }
       }
     };
-    
-    socket.onclose = () => { 
-        statusEl.textContent = "🔌 З'єднання втрачено..."; 
-        setTimeout(connectWebSocket, 5000); 
-    };
+    socket.onclose = () => { statusEl.textContent = "🔌 З'єднання втрачено..."; setTimeout(connectWebSocket, 5000); };
   }
 
   function openSettings() {
@@ -797,7 +768,6 @@ function connectWebSocket() {
   }
 
   // --- INTERVAL FOR TIMERS ---
-  // Refresh individual caller timers every second
   setInterval(() => {
       const allQ = Object.keys(queueCallers);
       let needsUpdate = false;
