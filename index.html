@@ -680,9 +680,10 @@
   function handleDragEnd(e) { this.classList.remove('dragging'); this.classList.remove('over'); document.querySelectorAll('.card').forEach(c => { c.classList.remove('over'); c.classList.remove('dragging'); }); }
   let dragSrcEl = null;
 
-  function connectWebSocket() {
+function connectWebSocket() {
     statusEl.textContent = "🔄 Підключення...";
     const socket = new WebSocket("wss://trackensure.gitstel.net/sw-monitor/?EIO=3&transport=websocket");
+    
     socket.onopen = () => { statusEl.textContent = "✅ З'єднання встановлено"; };
     
     socket.onmessage = (event) => {
@@ -692,46 +693,75 @@
           const payload = JSON.parse(data.slice(2));
           const type = payload[0];
           const d = payload[1];
+
           if (type === 'queue_times') updateQueueData(d.queue, d);
+
           if (type === 'queue_caller_join') {
             const { queue, position } = d;
             
-            // Aggressive number finding
             const number = d.connectedlinenum || d.calleridnum || d.caller_number || "";
             const rawName = d.connectedlinename || d.calleridname || d.caller_name || "";
             const cleanName = detectName(rawName);
             const lang = detectLanguage(rawName);
+            
             let displayText = "—";
-            if (number && cleanName) displayText = `${number} (${cleanName})`; else if (number) displayText = number; else if (cleanName) displayText = cleanName;
+            if (number && cleanName) displayText = `${number} (${cleanName})`; 
+            else if (number) displayText = number; 
+            else if (cleanName) displayText = cleanName;
             
             if (queue && position) {
                 if (!queueCallers[queue]) queueCallers[queue] = [];
-                if (number) queueCallers[queue] = queueCallers[queue].filter(c => c.number !== number);
+                
+                // --- ВИПРАВЛЕННЯ ТАЙМЕРА (START) ---
+                // 1. Спочатку шукаємо, чи є вже цей абонент, щоб зберегти його час
+                let savedJoinTime = Date.now();
+                if (number) {
+                    const existingCaller = queueCallers[queue].find(c => c.number === number);
+                    if (existingCaller && existingCaller.joinTime) {
+                        savedJoinTime = existingCaller.joinTime;
+                    }
+                    // 2. Видаляємо старий запис (щоб оновити позицію)
+                    queueCallers[queue] = queueCallers[queue].filter(c => c.number !== number);
+                }
+                // --- ВИПРАВЛЕННЯ ТАЙМЕРА (END) ---
+
                 const idx = Math.max(Number(position) - 1, 0);
                 
-                // ADD JOIN TIME HERE
+                // 3. Додаємо знову, але використовуємо збережений час (savedJoinTime)
                 queueCallers[queue].splice(idx, 0, { 
                     name: displayText, 
                     number, 
                     lang,
-                    joinTime: Date.now() // <--- TRACK START TIME
+                    joinTime: savedJoinTime 
                 });
                 
                 updateCallersList(queue);
             }
           }
+
           if (type === 'queue_caller_leave' || type === 'queue_caller_abandon') {
              const { queue, position } = d;
              if (queue && queueCallers[queue]) {
-                if (position) { const idx = Number(position) - 1; if (idx >= 0) queueCallers[queue].splice(idx, 1); }
-                else queueCallers[queue].shift();
+                if (position) { 
+                    const idx = Number(position) - 1; 
+                    if (idx >= 0) queueCallers[queue].splice(idx, 1); 
+                }
+                else {
+                    // Якщо позиція не прийшла, видаляємо першого (найчастіше це той, хто пішов)
+                    queueCallers[queue].shift();
+                }
                 updateCallersList(queue);
              }
           }
-        } catch (err) {}
+
+        } catch (err) { console.error(err); }
       }
     };
-    socket.onclose = () => { statusEl.textContent = "🔌 З'єднання втрачено..."; setTimeout(connectWebSocket, 5000); };
+    
+    socket.onclose = () => { 
+        statusEl.textContent = "🔌 З'єднання втрачено..."; 
+        setTimeout(connectWebSocket, 5000); 
+    };
   }
 
   function openSettings() {
