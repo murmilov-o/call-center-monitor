@@ -251,24 +251,11 @@
         <span class="g-stat-value" id="gs-max-hold">00:00</span>
     </div>
     
-    <div class="g-stat-item" style="min-width: 180px;">
-        <span class="g-stat-label">Daily Stats (Server)</span>
-        <div style="display: flex; justify-content: space-around;">
-            <div class="stat-container">
-                <div class="g-stat-value" id="gs-today-ans" style="color: #2ecc71;">0</div>
-                <div class="g-stat-sub">Ans</div>
-                <div class="stat-tooltip" id="tip-g-ans">Loading...</div>
-            </div>
-            <div class="stat-container">
-                <div class="g-stat-value" id="gs-today-abd" style="color: #e74c3c;">0</div>
-                <div class="g-stat-sub">Abd</div>
-                <div class="stat-tooltip" id="tip-g-abd">Loading...</div>
-            </div>
-            <div class="stat-container">
-                <div class="g-stat-value" id="gs-today-sl">0%</div>
-                <div class="g-stat-sub">SL</div>
-                <div class="stat-tooltip" id="tip-g-sl">Loading...</div>
-            </div>
+    <div class="g-stat-item">
+        <span class="g-stat-label">Daily Ans</span>
+        <div class="stat-container">
+            <div class="g-stat-value" id="gs-today-ans" style="color: #2ecc71;">0</div>
+            <div class="stat-tooltip" id="tip-g-ans">Loading...</div>
         </div>
     </div>
 </div>
@@ -402,23 +389,12 @@
 
   function updateStatLabels(prefix, qid) {
       const stats = getQStats(qid);
-      const slPercent = stats.ans > 0 ? Math.round((stats.sl_hits / stats.ans) * 100) : 0;
-
-      const elAns = document.getElementById(`${prefix}ans-${qid}`);
-      const elAbd = document.getElementById(`${prefix}abd-${qid}`);
-      const elSl = document.getElementById(`${prefix}sl-${qid}`);
       
+      const elAns = document.getElementById(`${prefix}ans-${qid}`);
       if(elAns) elAns.textContent = stats.ans;
-      if(elAbd) elAbd.textContent = stats.abd;
-      if(elSl) elSl.textContent = slPercent + '%';
 
       const tipAns = document.getElementById(`${prefix}tip-ans-${qid}`);
-      const tipAbd = document.getElementById(`${prefix}tip-abd-${qid}`);
-      const tipSl = document.getElementById(`${prefix}tip-sl-${qid}`);
-
       if(tipAns) tipAns.innerHTML = getTooltipHTML('ans', qid);
-      if(tipAbd) tipAbd.innerHTML = getTooltipHTML('abd', qid);
-      if(tipSl) tipSl.innerHTML = getTooltipHTML('sl', qid);
   }
 
   function updateGlobalSummary() {
@@ -440,20 +416,15 @@
       mhEl.textContent = formatTime(maxHold);
       if(maxHold >= 600) mhEl.classList.add('alert'); else mhEl.classList.remove('alert');
 
-      let totalAns = 0; let totalAbd = 0; let totalSLHits = 0;
+      let totalAns = 0;
       if (fullStats.daily.queues) {
           Object.values(fullStats.daily.queues).forEach(s => {
-              totalAns += s.ans; totalAbd += s.abd; totalSLHits += s.sl_hits;
+              totalAns += s.ans; 
           });
       }
-      const totalSlPercent = totalAns > 0 ? Math.round((totalSLHits / totalAns) * 100) : 0;
+      
       document.getElementById('gs-today-ans').textContent = totalAns;
-      document.getElementById('gs-today-abd').textContent = totalAbd;
-      document.getElementById('gs-today-sl').textContent = totalSlPercent + '%';
-
       document.getElementById('tip-g-ans').innerHTML = getTooltipHTML('ans', null);
-      document.getElementById('tip-g-abd').innerHTML = getTooltipHTML('abd', null);
-      document.getElementById('tip-g-sl').innerHTML = getTooltipHTML('sl', null);
 
       const top3Container = document.getElementById('gs-top3');
       if (busyList.length === 0) {
@@ -620,7 +591,7 @@
               const acceptBtn = c.number ? `<span class="action-btn accept-btn" onclick="event.stopPropagation(); acceptCall('${c.number}')">📞</span>` : '';
               const copyBtn = c.number ? `<span class="action-btn copy-btn" onclick="event.stopPropagation(); copyText('${c.number}', this)">📋</span>` : '';
               
-              // --- TIMER LOGIC START ---
+              // --- TIMER LOGIC ---
               let timerHTML = '';
               if (c.joinTime) {
                   const now = Date.now();
@@ -633,7 +604,6 @@
                   const sec = (durationSec % 60).toString().padStart(2, '0');
                   timerHTML = `<span class="timer-badge ${tClass}">${min}:${sec}</span>`;
               }
-              // --- TIMER LOGIC END ---
 
               return `<div class="caller-row">
                   <span class="caller-index">${i + 1}.</span>
@@ -692,7 +662,7 @@
             if (queue && position) {
                 if (!queueCallers[queue]) queueCallers[queue] = [];
                 
-                // --- FIX TIMER: Check for existing caller to preserve joinTime ---
+                // --- TIMER FIX ---
                 let savedJoinTime = Date.now();
                 if (number) {
                     const existingCaller = queueCallers[queue].find(c => c.number === number);
@@ -767,7 +737,6 @@
       renderAll(); closeSettings();
   }
 
-  // --- INTERVAL FOR TIMERS ---
   setInterval(() => {
       const allQ = Object.keys(queueCallers);
       let needsUpdate = false;
