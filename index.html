@@ -28,32 +28,25 @@
         70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); } 
         100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } 
     }
+    @keyframes text-pulse {
+        0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; }
+    }
 
-    /* --- STATUS COLORS --- */
-    
-    /* 1. GREEN (1-5) */
+    /* --- STATUS COLORS (CARDS) --- */
     .status-green { 
         background-color: #e8f5e9 !important; 
         border-left: 6px solid #2ecc71 !important; 
         color: #1b5e20 !important;
     }
-    body.dark .status-green { 
-        background-color: #1e3a23 !important; 
-        color: #c8e6c9 !important; 
-    }
+    body.dark .status-green { background-color: #1e3a23 !important; color: #c8e6c9 !important; }
 
-    /* 2. ORANGE (6-10) */
     .status-orange { 
         background-color: #fff3cd !important; 
         border-left: 6px solid #f39c12 !important; 
         color: #856404 !important; 
     }
-    body.dark .status-orange { 
-        background-color: #4e3e20 !important; 
-        color: #ffda6a !important; 
-    }
+    body.dark .status-orange { background-color: #4e3e20 !important; color: #ffda6a !important; }
 
-    /* 3. RED (>10) */
     .status-red { 
         background-color: #e74c3c !important; 
         color: white !important; 
@@ -66,6 +59,20 @@
     }
     .status-red .badge { background: white; color: #c0392b; }
     
+    /* --- TIMER COLORS (INDIVIDUAL CALLERS) --- */
+    .timer-badge { font-weight: bold; font-family: monospace; margin-left: 5px; padding: 1px 4px; border-radius: 4px; }
+    .t-green { color: #27ae60; background: rgba(39, 174, 96, 0.1); }
+    .t-orange { color: #d35400; background: rgba(211, 84, 0, 0.1); }
+    .t-red { color: #c0392b; background: rgba(192, 57, 43, 0.1); animation: text-pulse 1s infinite; }
+    
+    /* Dark mode overrides for timers */
+    body.dark .t-green { color: #2ecc71; background: rgba(46, 204, 113, 0.2); }
+    body.dark .t-orange { color: #e67e22; background: rgba(230, 126, 34, 0.2); }
+    body.dark .t-red { color: #e74c3c; background: rgba(231, 76, 60, 0.2); }
+
+    /* Fix timer inside Red Card (make sure it's readable) */
+    .status-red .t-green, .status-red .t-orange, .status-red .t-red { color: white; background: rgba(0,0,0,0.2); }
+
     /* --- COMPONENTS --- */
     .btn {
       cursor: pointer; font-size: 15px; background: #fff; border: 1px solid #ccc;
@@ -77,6 +84,7 @@
     .btn.primary { background-color: #007bff; color: white; border-color: #007bff; }
     
     body.dark .btn { background: #444; border-color: #666; color: #eee; }
+    body.dark .btn:hover { background-color: #555; }
     body.dark .btn.active { background-color: #235d3a; border-color: #28a745; color: #fff; }
 
     .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
@@ -88,11 +96,10 @@
     /* GRID */
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; width: 100%; }
     .card {
-      background: white; /* Default 0 calls */
-      border-radius: 12px; padding: 20px 22px;
+      background: white; border-radius: 12px; padding: 20px 22px;
       box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column;
       justify-content: space-between; transition: all 0.3s ease; min-height: 250px;
-      border-left: 6px solid #ccc; /* Default border */
+      border-left: 6px solid #ccc; 
     }
     body.dark .card { background: #2e2e2e; color: #eee; border-color: #555; }
     .card.dragging { opacity: 0.4; border: 2px dashed #999; }
@@ -632,7 +639,28 @@
           return list.map((c, i) => {
               const acceptBtn = c.number ? `<span class="action-btn accept-btn" onclick="event.stopPropagation(); acceptCall('${c.number}')">📞</span>` : '';
               const copyBtn = c.number ? `<span class="action-btn copy-btn" onclick="event.stopPropagation(); copyText('${c.number}', this)">📋</span>` : '';
-              return `<div class="caller-row"><span class="caller-index">${i + 1}.</span>${acceptBtn}<span class="caller-info">🌐 ${c.lang.toUpperCase()} — ${c.name}</span>${copyBtn}</div>`;
+              
+              // --- TIMER LOGIC START ---
+              let timerHTML = '';
+              if (c.joinTime) {
+                  const now = Date.now();
+                  const durationSec = Math.floor((now - c.joinTime) / 1000);
+                  let tClass = 't-green'; // < 5 min
+                  if (durationSec >= 600) tClass = 't-red'; // > 10 min
+                  else if (durationSec >= 300) tClass = 't-orange'; // 5-10 min
+                  
+                  const min = Math.floor(durationSec / 60).toString().padStart(2, '0');
+                  const sec = (durationSec % 60).toString().padStart(2, '0');
+                  timerHTML = `<span class="timer-badge ${tClass}">${min}:${sec}</span>`;
+              }
+              // --- TIMER LOGIC END ---
+
+              return `<div class="caller-row">
+                  <span class="caller-index">${i + 1}.</span>
+                  ${acceptBtn}
+                  <span class="caller-info">🌐 ${c.lang.toUpperCase()} — ${c.name} ${timerHTML}</span>
+                  ${copyBtn}
+              </div>`;
           }).join('');
       };
       const gl = document.getElementById(`callers-${qid}`); if(gl) gl.innerHTML = generateHTML(callers.slice(0, 5));
@@ -680,7 +708,15 @@
                 if (!queueCallers[queue]) queueCallers[queue] = [];
                 if (number) queueCallers[queue] = queueCallers[queue].filter(c => c.number !== number);
                 const idx = Math.max(Number(position) - 1, 0);
-                queueCallers[queue].splice(idx, 0, { name: displayText, number, lang });
+                
+                // ADD JOIN TIME HERE
+                queueCallers[queue].splice(idx, 0, { 
+                    name: displayText, 
+                    number, 
+                    lang,
+                    joinTime: Date.now() // <--- TRACK START TIME
+                });
+                
                 updateCallersList(queue);
             }
           }
@@ -729,6 +765,19 @@
       document.body.className = fd.get('theme');
       renderAll(); closeSettings();
   }
+
+  // --- INTERVAL FOR TIMERS ---
+  // Refresh individual caller timers every second
+  setInterval(() => {
+      const allQ = Object.keys(queueCallers);
+      let needsUpdate = false;
+      allQ.forEach(qid => {
+          if(queueCallers[qid] && queueCallers[qid].length > 0) {
+              updateCallersList(qid);
+              needsUpdate = true;
+          }
+      });
+  }, 1000);
 
   document.body.className = getTheme();
   switchView(currentView);
