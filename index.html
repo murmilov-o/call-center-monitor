@@ -49,7 +49,6 @@
     body.dark .btn:hover { background-color: #555; }
     body.dark .btn.active { background-color: #235d3a; border-color: #28a745; color: #fff; }
 
-    /* SORTING SELECT NATIVE */
     select.btn { padding: 6px 12px; font-family: inherit; font-size: 14px; }
     
     /* HEADER & SIDEBAR */
@@ -58,7 +57,7 @@
     h1 { margin: 0; font-size: 24px; white-space: nowrap; }
     .hamburger { display: none; background: none; border: none; font-size: 28px; cursor: pointer; color: inherit; padding: 0; }
     .desktop-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .mobile-controls { display: none; } /* Hidden on PC */
+    .mobile-controls { display: none; } 
     #status { margin-bottom: 20px; font-size: 14px; color: #666; }
     body.dark #status { color: #aaa; }
 
@@ -172,7 +171,6 @@
         .top-bar-left { flex-grow: 1; }
         h1 { font-size: 18px; margin-right: 10px; }
         
-        /* Mobile Sort Button Top Right */
         .mobile-controls { display: flex; align-items: center; gap: 10px; }
         
         .grid { gap: 12px; }
@@ -461,9 +459,17 @@
       let sorted = [...visibleQueues];
       
       if (currentSort === 'calls') {
-          sorted.sort((a, b) => (queuesData[b]?.queued_calls || 0) - (queuesData[a]?.queued_calls || 0));
+          sorted.sort((a, b) => {
+              const callsA = queuesData[a] ? Number(queuesData[a].queued_calls) : 0;
+              const callsB = queuesData[b] ? Number(queuesData[b].queued_calls) : 0;
+              return callsB - callsA;
+          });
       } else if (currentSort === 'wait') {
-          sorted.sort((a, b) => (queuesData[b]?.hold || 0) - (queuesData[a]?.hold || 0));
+          sorted.sort((a, b) => {
+              const waitA = queuesData[a] ? Number(queuesData[a].hold) : 0;
+              const waitB = queuesData[b] ? Number(queuesData[b].hold) : 0;
+              return waitB - waitA;
+          });
       }
       
       sorted.forEach((qid, index) => {
@@ -471,12 +477,12 @@
           const row = document.getElementById(`row-${qid}`);
           const detail = document.getElementById(`detail-${qid}`);
           
-          const calls = queuesData[qid]?.queued_calls || 0;
+          const calls = queuesData[qid] ? Number(queuesData[qid].queued_calls) : 0;
           const shouldHide = hideEmpty && calls === 0;
           
           if (card) {
               card.classList.toggle('hidden', shouldHide);
-              card.style.order = index; // Pure CSS sorting for grid! Prevents elements disappearing
+              card.style.order = index; 
           }
           if (row && detail) {
               row.classList.toggle('hidden', shouldHide);
@@ -562,6 +568,8 @@
           if(sbGrid) sbGrid.classList.remove('active'); if(sbList) sbList.classList.add('active');
           dragBtn.style.display = 'none'; isDragEnabled = false; updateDragUI();
       }
+      
+      renderAll(); // ВЕРНУЛ ЭТУ СТРОКУ, ТЕПЕРЬ ВСЕ РАБОТАЕТ!
   }
 
   function renderAll() {
