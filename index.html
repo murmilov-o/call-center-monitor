@@ -54,9 +54,13 @@
     .top-bar-left { display: flex; align-items: center; gap: 15px; }
     h1 { margin: 0; font-size: 24px; white-space: nowrap; }
     .hamburger { display: none; background: none; border: none; font-size: 28px; cursor: pointer; color: inherit; padding: 0; }
-    .desktop-controls { display: flex; gap: 8px; flex-wrap: wrap; }
+    .desktop-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     #status { margin-bottom: 20px; font-size: 14px; color: #666; }
     body.dark #status { color: #aaa; }
+
+    /* SORTING SELECT */
+    select.btn { appearance: none; padding-right: 30px; background-image: url('data:image/svg+xml;utf8,<svg fill="black" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); background-repeat: no-repeat; background-position-x: 95%; background-position-y: 5px; }
+    body.dark select.btn { background-image: url('data:image/svg+xml;utf8,<svg fill="white" height="24" viewBox="0 0 24 24" width="24" xmlns="http://www.w3.org/2000/svg"><path d="M7 10l5 5 5-5z"/><path d="M0 0h24v24H0z" fill="none"/></svg>'); }
 
     /* SIDEBAR (MOBILE MENU) */
     .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3999; display: none; opacity: 0; transition: opacity 0.3s; }
@@ -76,6 +80,7 @@
     .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; width: 100%; }
     .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; transition: all 0.3s ease; border-left: 6px solid #ccc; position: relative; }
     body.dark .card { background: #2e2e2e; color: #eee; border-color: #555; }
+    .card.dragging { opacity: 0.4; border: 2px dashed #999; }
     .queue-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;}
     .queue-name { font-weight: bold; font-size: 18px; margin-bottom: 4px; pointer-events: none; }
     .queue-id { font-size: 13px; color: #565656; pointer-events: none; }
@@ -123,7 +128,6 @@
     body.dark .global-stats { background: #252525; border-top: 1px solid #444; }
     .global-stats.minimized { transform: translateY(100%); }
     
-    /* Toggle Tab for Desktop - Fixed Centering & Clickability */
     .stats-toggle-tab { 
         position: absolute; 
         top: -28px; 
@@ -159,17 +163,6 @@
     .add-queue-form { display: flex; gap: 8px; margin-top: 5px; }
     .delete-q-btn { background: none; border: none; color: #ff4444; cursor: pointer; font-size: 18px; transition: 0.2s; padding: 5px;}
     .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-    
-    .history-date-row { padding: 14px; background: #f8f9fa; border-bottom: 1px solid #eee; cursor: pointer; font-weight: bold; display: flex; justify-content: space-between; border-radius: 6px;}
-    .history-date-row:hover { background: #e9ecef; }
-    body.dark .history-date-row { background: #333; border-color: #444; }
-    body.dark .history-date-row:hover { background: #444; }
-    .history-details { display: none; padding: 10px; background: #fff; }
-    body.dark .history-details { background: #2b2b2b; }
-    .history-details.open { display: block; }
-    .h-table { width: 100%; font-size: 13px; border-collapse: collapse; }
-    .h-table th, .h-table td { padding: 8px; border-bottom: 1px solid #eee; text-align: left; }
-    body.dark .h-table th, body.dark .h-table td { border-color: #444; }
 
     /* CHEATSHEET */
     .cheatsheet { margin-top: 30px; padding: 20px; border-radius: 12px; background: #fff; display: flex; flex-wrap: wrap; gap: 40px; margin-bottom: 100px; }
@@ -179,17 +172,15 @@
     .cheatsheet ul { list-style: none; padding: 0; margin: 0; }
     .cheatsheet li { margin: 4px 0; font-size: 14px; }
 
-    /* --- MOBILE ADAPTATION (THE MAGIC) --- */
+    /* --- MOBILE ADAPTATION --- */
     @media (max-width: 768px) {
         body { padding: 15px; padding-bottom: 80px; }
         
-        /* Header */
         .desktop-controls { display: none; }
         .hamburger { display: block; }
         h1 { font-size: 20px; }
         .top-bar { margin-bottom: 15px; }
         
-        /* Smart Grid & Accordion Cards */
         .grid { gap: 12px; }
         .card { padding: 15px; min-height: auto; cursor: pointer; overflow: hidden; }
         .queue-header { margin-bottom: 0; align-items: center; }
@@ -198,14 +189,12 @@
         .queue-id { font-size: 12px; }
         .mobile-wait { display: inline-block; }
         
-        /* Collapsible behavior */
         .collapsible-content { display: none; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;}
         body.dark .collapsible-content { border-color: #555; }
         .card.expanded .collapsible-content { display: flex; }
         .card-indicator { display: block; }
         .card.expanded .card-indicator { display: none; }
         
-        /* Bottom Sheet Stats */
         .global-stats {
             transform: translateY(100%);
             flex-direction: column;
@@ -221,12 +210,11 @@
         .g-stat-item { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); padding-right: 0; padding-bottom: 10px; flex-direction: row; justify-content: space-between; align-items: center; text-align: left;}
         .g-stat-item:last-child { border-bottom: none; padding-bottom: 0; }
         .g-stat-label { margin-bottom: 0; font-size: 12px; }
-        .stats-toggle-tab { display: none; } /* Hide desktop toggle on mobile */
+        .stats-toggle-tab { display: none; } 
         
-        /* Floating Button for Stats (Fixed colors) */
         .mobile-fab-stats {
             display: flex; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: #2c3e50; /* Elegant dark blue instead of toxic blue */
+            background: #2c3e50; 
             color: white; padding: 12px 25px; border-radius: 30px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-weight: bold; font-size: 14px;
             z-index: 1999; align-items: center; justify-content: center; width: auto; white-space: nowrap; transition: 0.3s;
@@ -234,7 +222,6 @@
         body.dark .mobile-fab-stats { background: #333; border: 1px solid #555; }
         .mobile-fab-stats.hidden { transform: translate(-50%, 150%); }
 
-        /* Tables & Cheatsheet */
         .cheatsheet { flex-direction: column; gap: 20px; padding: 15px; }
         th, td { padding: 10px 5px; font-size: 13px;}
     }
@@ -247,6 +234,14 @@
     <button class="sidebar-close" onclick="toggleSidebar()">×</button>
     <h2>Меню</h2>
     
+    <select class="btn" id="sortSelectMob" onchange="changeSort(this.value)" style="width: 100%; margin-bottom: 5px;">
+        <option value="custom">↕️ Сортування: Стандарт</option>
+        <option value="calls">🔥 Сорт: За дзвінками</option>
+        <option value="wait">⏳ Сорт: За часом</option>
+    </select>
+
+    <div style="height: 1px; background: #ddd; margin: 10px 0;"></div>
+
     <button class="btn active" id="sbViewGrid" onclick="switchView('grid'); toggleSidebar()">🔲 Плитка</button>
     <button class="btn" id="sbViewList" onclick="switchView('list'); toggleSidebar()">☰ Список</button>
     
@@ -256,7 +251,6 @@
     
     <div style="height: 1px; background: #ddd; margin: 5px 0;"></div>
     
-    <button class="btn" onclick="openHistory(); toggleSidebar()">📊 Історія (Стат)</button>
     <button class="btn" onclick="openSettings(); toggleSidebar()">⚙️ Налаштування</button>
 </div>
 
@@ -266,11 +260,16 @@
       <h1>📞 Активні черги</h1>
   </div>
   <div class="desktop-controls">
+      <select class="btn" id="sortSelectDesk" onchange="changeSort(this.value)" style="margin-right: 10px;">
+          <option value="custom">↕️ Стандарт</option>
+          <option value="calls">🔥 За дзвінками</option>
+          <option value="wait">⏳ За часом</option>
+      </select>
+
       <button class="btn active" id="viewGridBtn" onclick="switchView('grid')" title="Grid View">🔲</button>
       <button class="btn" id="viewListBtn" onclick="switchView('list')" title="List View">☰</button>
       <button class="btn" id="hideEmptyBtn" onclick="toggleHideEmpty()" title="Hide Empty">👁️</button>
       <button class="btn" id="dragBtn" onclick="toggleDragMode()" title="Drag & Drop">🔒</button>
-      <button class="btn" onclick="openHistory()" title="History">📊 Статистика</button>
       <button class="btn" onclick="openSettings()" title="Settings">⚙️ Налаштування</button>
   </div>
 </div>
@@ -329,16 +328,6 @@
     <button class="btn hamburger" style="width:100%; margin-top:10px; background: rgba(255,255,255,0.1); color:white; border:none;" onclick="toggleMobileStats()">Закрити</button>
 </div>
 
-<div class="modal" id="historyModal">
-  <div class="modal-content">
-    <h2>📊 Історія дзвінків</h2>
-    <div id="historyContent">Завантаження...</div>
-    <div class="modal-buttons">
-      <button type="button" class="btn" onclick="closeHistory()">Закрити</button>
-    </div>
-  </div>
-</div>
-
 <div class="modal" id="settingsModal">
   <div class="modal-content">
     <h2>Налаштування</h2>
@@ -382,7 +371,6 @@
 
 <script>
   const API_URL = "https://queue-server-fbi5.onrender.com/stats"; 
-  const HISTORY_URL = "https://queue-server-fbi5.onrender.com/history";
 
   const defaultQueueNames = {
     Q700: "TrackEnsure Support", Q701: "TrackEnsure Support rus/ukr", Q801: "Callback rus/ukr", Q800: "Callback",
@@ -396,6 +384,7 @@
   let currentView = localStorage.getItem('viewMode') || 'grid';
   let isDragEnabled = false;
   let hideEmpty = localStorage.getItem('hideEmpty') === 'true';
+  let currentSort = localStorage.getItem('sortMode') || 'custom';
   
   const queueCallers = {}; 
   const queuesData = {};   
@@ -408,8 +397,6 @@
   const listBody = document.getElementById('listBody');
   const settingsModal = document.getElementById('settingsModal');
   const settingsForm = document.getElementById('settingsForm');
-  const historyModal = document.getElementById('historyModal');
-  const historyContent = document.getElementById('historyContent');
   
   // UI Helpers
   function getTheme() { return localStorage.getItem('theme') || 'light'; }
@@ -418,13 +405,12 @@
   function loadVisibleQueues() { return JSON.parse(localStorage.getItem('visibleQueues') || JSON.stringify(Object.keys(getAllQueues()))); }
   function saveVisibleQueues(list) { localStorage.setItem('visibleQueues', JSON.stringify(list)); }
   function formatTime(seconds) { const m = String(Math.floor(seconds / 60)).padStart(2, '0'); const s = String(seconds % 60).padStart(2, '0'); return `${m}:${s}`; }
-  function formatSecToHHMM(seconds) { if (!seconds) return "0s"; const h = Math.floor(seconds / 3600); const m = Math.floor((seconds % 3600) / 60); const s = seconds % 60; return h > 0 ? `${h}h ${m}m` : `${m}m ${s}s`; }
   
   function getQStats(qid) { return (fullStats.daily && fullStats.daily.queues && fullStats.daily.queues[qid]) ? fullStats.daily.queues[qid] : { ans: 0, abd: 0 }; }
   function detectLanguage(name) { if (!name) return "?"; const u = name.toUpperCase(); if (u.includes("UKR")) return "ukr"; if (u.includes("RU")) return "ru"; if (u.includes("EN")) return "en"; return "?"; }
   function detectName(raw) { if (!raw) return ""; const idx = raw.lastIndexOf(":"); return idx === -1 ? raw : raw.slice(idx + 1).trim(); }
 
-  // --- MOBILE UI FUNCTIONS ---
+  // --- MOBILE & UI FUNCTIONS ---
   function toggleSidebar() {
       document.getElementById('appSidebar').classList.toggle('open');
       document.getElementById('sidebarOverlay').classList.toggle('open');
@@ -433,26 +419,18 @@
   function toggleMobileStats() {
       const statsBar = document.getElementById('statsBar');
       statsBar.classList.toggle('open');
-      
       const fab = document.getElementById('mobileFabStats');
-      if (statsBar.classList.contains('open')) {
-          fab.classList.add('hidden');
-      } else {
-          fab.classList.remove('hidden');
-      }
+      if (statsBar.classList.contains('open')) fab.classList.add('hidden');
+      else fab.classList.remove('hidden');
   }
 
   function toggleHideEmpty() {
-      hideEmpty = !hideEmpty;
-      localStorage.setItem('hideEmpty', hideEmpty);
-      updateHideEmptyUI();
-      renderAll();
+      hideEmpty = !hideEmpty; localStorage.setItem('hideEmpty', hideEmpty);
+      updateHideEmptyUI(); applySorting();
   }
   
   function updateHideEmptyUI() {
-      const btnDesk = document.getElementById('hideEmptyBtn');
-      const btnMob = document.getElementById('sbHideEmpty');
-      
+      const btnDesk = document.getElementById('hideEmptyBtn'); const btnMob = document.getElementById('sbHideEmpty');
       if (hideEmpty) {
           if(btnDesk) { btnDesk.classList.add('active'); btnDesk.innerHTML = '🙈'; }
           if(btnMob) { btnMob.classList.add('active'); btnMob.innerHTML = '🙈 Сховані порожні'; }
@@ -463,10 +441,55 @@
   }
 
   function toggleCardExpand(qid) {
-      if (window.innerWidth <= 768) {
-          const card = document.getElementById(`card-${qid}`);
-          if (card) card.classList.toggle('expanded');
+      if (window.innerWidth <= 768) { const card = document.getElementById(`card-${qid}`); if (card) card.classList.toggle('expanded'); }
+  }
+
+  // --- SORTING LOGIC ---
+  function changeSort(val) {
+      currentSort = val; localStorage.setItem('sortMode', val);
+      document.getElementById('sortSelectDesk').value = val;
+      document.getElementById('sortSelectMob').value = val;
+      
+      const dragBtn = document.getElementById('dragBtn');
+      if(currentSort === 'custom') {
+          if (currentView === 'grid') dragBtn.style.display = 'inline-flex';
+      } else {
+          dragBtn.style.display = 'none';
+          if(isDragEnabled) toggleDragMode(); // disable if active
       }
+      applySorting();
+  }
+
+  function applySorting() {
+      const visibleQueues = loadVisibleQueues();
+      let sorted = [...visibleQueues];
+      
+      if (currentSort === 'calls') {
+          sorted.sort((a, b) => (queuesData[b]?.queued_calls || 0) - (queuesData[a]?.queued_calls || 0));
+      } else if (currentSort === 'wait') {
+          sorted.sort((a, b) => (queuesData[b]?.hold || 0) - (queuesData[a]?.hold || 0));
+      }
+      
+      sorted.forEach(qid => {
+          const card = document.getElementById(`card-${qid}`);
+          const row = document.getElementById(`row-${qid}`);
+          const detail = document.getElementById(`detail-${qid}`);
+          
+          const calls = queuesData[qid]?.queued_calls || 0;
+          const shouldHide = hideEmpty && calls === 0;
+          
+          if (card) {
+              card.style.display = shouldHide ? 'none' : 'flex';
+              gridEl.appendChild(card); // Re-append places it in the new order without re-rendering
+          }
+          
+          if (row && detail) {
+              row.style.display = shouldHide ? 'none' : 'table-row';
+              if (shouldHide) { row.classList.remove('expanded'); detail.classList.remove('open'); }
+              listBody.appendChild(row);
+              listBody.appendChild(detail);
+          }
+      });
   }
 
   // --- FETCH STATS ---
@@ -481,39 +504,12 @@
   }
   setInterval(fetchStatsOnly, 10000); fetchStatsOnly();
 
-  // --- HISTORY LOGIC ---
-  async function openHistory() {
-      historyModal.style.display = 'flex'; historyContent.innerHTML = 'Завантаження...';
-      try {
-          const res = await fetch(HISTORY_URL); if (!res.ok) throw new Error("Err");
-          const historyData = await res.json(); renderHistory(historyData);
-      } catch (e) { historyContent.innerHTML = "Немає даних."; }
-  }
-  function closeHistory() { historyModal.style.display = 'none'; }
-  function renderHistory(data) {
-      const dates = Object.keys(data).sort((a,b) => new Date(b) - new Date(a));
-      if (dates.length === 0) { historyContent.innerHTML = "Історія пуста."; return; }
-      let html = '';
-      dates.forEach(dateStr => {
-          const dayData = data[dateStr];
-          const totalAns = dayData.total ? dayData.total.ans : 0;
-          const avgWait = totalAns > 0 ? Math.round(dayData.total.wait / totalAns) : 0;
-          html += `<div class="history-date-row" onclick="document.getElementById('hist-${dateStr.replace(/\//g, '-')}').classList.toggle('open')"><span>📅 ${dateStr}</span><span>Ans: ${totalAns} | Wait: ${formatSecToHHMM(avgWait)}</span></div><div id="hist-${dateStr.replace(/\//g, '-')}" class="history-details"><table class="h-table"><thead><tr><th>Година</th><th>Ans</th><th>Avg Wait</th></tr></thead><tbody>`;
-          const hours = Object.keys(dayData.hours || {}).sort((a,b) => Number(a) - Number(b));
-          hours.forEach(h => {
-              const hData = dayData.hours[h]; const hAvg = hData.ans > 0 ? Math.round(hData.wait / hData.ans) : 0;
-              html += `<tr><td>${h}:00 - ${h}:59</td><td>${hData.ans}</td><td>${formatSecToHHMM(hAvg)}</td></tr>`;
-          });
-          html += `</tbody></table></div>`;
-      });
-      historyContent.innerHTML = html;
-  }
-
   function getTooltipHTML(type, qid) {
       const source = qid ? (fullStats.queuesPeriods[qid] || {}) : fullStats.globalPeriods;
       const h1 = source.h1 || { ans: 0 }; const h2 = source.h2 || { ans: 0 }; const h4 = source.h4 || { ans: 0 };
       return `1h: <b>${h1.ans}</b><br>2h: <b>${h2.ans}</b><br>4h: <b>${h4.ans}</b>`;
   }
+  
   function updateStatLabels(prefix, qid) {
       const stats = getQStats(qid); const elAns = document.getElementById(`${prefix}ans-${qid}`);
       if(elAns) elAns.textContent = stats.ans;
@@ -556,34 +552,36 @@
       currentView = mode; localStorage.setItem('viewMode', mode);
       const gridBtn = document.getElementById('viewGridBtn'); const listBtn = document.getElementById('viewListBtn');
       const sbGrid = document.getElementById('sbViewGrid'); const sbList = document.getElementById('sbViewList');
+      const dragBtn = document.getElementById('dragBtn');
       
       if (mode === 'grid') {
           gridEl.classList.remove('hidden'); listEl.classList.add('hidden');
           if(gridBtn) gridBtn.classList.add('active'); if(listBtn) listBtn.classList.remove('active');
           if(sbGrid) sbGrid.classList.add('active'); if(sbList) sbList.classList.remove('active');
-          document.getElementById('dragBtn').style.display = 'inline-flex';
+          if(currentSort === 'custom') dragBtn.style.display = 'inline-flex';
       } else {
           gridEl.classList.add('hidden'); listEl.classList.remove('hidden');
           if(gridBtn) gridBtn.classList.remove('active'); if(listBtn) listBtn.classList.add('active');
           if(sbGrid) sbGrid.classList.remove('active'); if(sbList) sbList.classList.add('active');
-          document.getElementById('dragBtn').style.display = 'none'; isDragEnabled = false; updateDragUI();
+          dragBtn.style.display = 'none'; isDragEnabled = false; updateDragUI();
       }
-      renderAll();
   }
 
   function renderAll() {
       const visibleQueues = loadVisibleQueues(); const allQueues = getAllQueues();
       gridEl.innerHTML = ''; listBody.innerHTML = '';
+      
+      // Create elements without checking visibility yet (applySorting will handle it)
       visibleQueues.forEach(qid => {
           const name = allQueues[qid] || qid;
           const data = queuesData[qid] || { queued_calls: 0, logged_in: "-", available: "-", hold: 0 };
-          if (hideEmpty && data.queued_calls === 0) return;
-
           gridEl.appendChild(createCard(qid, name, data));
           const { mainRow, detailRow } = createListRow(qid, name, data);
           listBody.appendChild(mainRow); listBody.appendChild(detailRow);
           updateCallersList(qid);
       });
+      
+      applySorting();
       updateGlobalSummary();
   }
 
@@ -673,14 +671,6 @@
   function updateQueueData(qid, raw) {
       queuesData[qid] = { queued_calls: Number(raw.queued_calls), logged_in: raw.logged_in_members, available: raw.available_members, hold: Number(raw.longest_hold_time || 0) };
       const d = queuesData[qid];
-      
-      const cardExists = !!document.getElementById(`card-${qid}`);
-      if (hideEmpty) {
-          if ((d.queued_calls === 0 && cardExists) || (d.queued_calls > 0 && !cardExists)) {
-              renderAll(); 
-              return;
-          }
-      }
 
       const card = document.getElementById(`card-${qid}`);
       if (card) {
@@ -696,7 +686,13 @@
           document.getElementById(`l-avail-${qid}`).textContent = d.available;
           updateStatLabels('l-', qid); updateBlockColor(row, d.queued_calls);
       }
-      handleTimer(qid, d.hold, d.queued_calls); updateGlobalSummary();
+      
+      handleTimer(qid, d.hold, d.queued_calls); 
+      updateGlobalSummary();
+      
+      // Live sorting & hide empty evaluation
+      if (currentSort !== 'custom' || hideEmpty) applySorting();
+      
       if (d.queued_calls === 0) { queueCallers[qid] = []; updateCallersList(qid); }
       else if (queueCallers[qid] && queueCallers[qid].length > d.queued_calls) { queueCallers[qid] = queueCallers[qid].slice(0, d.queued_calls); updateCallersList(qid); }
   }
@@ -710,7 +706,10 @@
           const lh = document.getElementById(`l-hold-${qid}`); if(lh) { lh.textContent=fmt; lh.className=colorClass; }
       };
       render(hold);
-      if (count > 0) timers[qid] = setInterval(() => { hold++; render(hold); updateGlobalSummary(); }, 1000);
+      if (count > 0) timers[qid] = setInterval(() => { 
+          hold++; render(hold); updateGlobalSummary(); 
+          if(currentSort === 'wait') applySorting(); // Resort if waiting is priority
+      }, 1000);
   }
 
   function updateCallersList(qid) {
@@ -821,7 +820,10 @@
       allQ.forEach(qid => { if(queueCallers[qid] && queueCallers[qid].length > 0) { updateCallersList(qid); needsUpdate = true; } });
   }, 1000);
 
+  // Initialize
   document.body.className = getTheme();
+  document.getElementById('sortSelectDesk').value = currentSort;
+  document.getElementById('sortSelectMob').value = currentSort;
   updateHideEmptyUI();
   switchView(currentView);
   connectWebSocket();
