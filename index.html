@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Моніторинг черг</title>
   
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z'/></svg>">
+
   <style>
     /* --- DESIGN SYSTEM (GRAPHITE & MINIMAL) --- */
     :root {
@@ -71,7 +73,18 @@
     .zoom-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--text-muted); cursor: pointer; transition: 0.2s;}
     .zoom-slider::-webkit-slider-thumb:hover { background: var(--text-main); transform: scale(1.2); }
 
-    select.btn { appearance: none; padding-right: 28px; background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%236b7280" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6"></path></svg>'); background-repeat: no-repeat; background-position-x: calc(100% - 8px); background-position-y: center; background-size: 14px; }
+    /* SELECT (Fix for iOS / Safari double arrows) */
+    select.btn { 
+        -webkit-appearance: none; 
+        -moz-appearance: none; 
+        appearance: none; 
+        padding-right: 28px; 
+        background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%236b7280" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6"></path></svg>'); 
+        background-repeat: no-repeat; 
+        background-position-x: calc(100% - 8px); 
+        background-position-y: center; 
+        background-size: 14px; 
+    }
     body.dark select.btn { background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%2394a3b8" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6"></path></svg>'); }
 
     /* TOP BAR */
@@ -255,67 +268,73 @@
         .cheatsheet { margin-top: 24px; gap: 16px; }
         th, td { padding: 10px 8px; font-size: 12px;}
     }
-
-    /* SVG ICONS DEFS */
-    .icon-menu { d: path("M3 12h18M3 6h18M3 18h18"); }
-    .icon-grid { d: path("M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z"); }
-    .icon-list { d: path("M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"); }
-    .icon-eye { d: path("M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"); }
-    .icon-eye-off { d: path("M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"); }
-    .icon-lock { d: path("M7 11V7a5 5 0 0 1 10 0v4 M3 11h18v11H3z"); }
-    .icon-unlock { d: path("M7 11V7a5 5 0 0 1 9.9-1 M3 11h18v11H3z"); }
-    .icon-settings { d: path("M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"); }
-    .icon-copy { d: path("M9 9h10v10H9z M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"); }
-    .icon-phone { d: path("M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"); }
-    .icon-activity { d: path("M22 12h-4l-3 9L9 3l-3 9H2"); }
-    .icon-clock { d: path("M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M12 6v6l4 2"); }
-    .icon-users { d: path("M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75"); }
-    .icon-x { d: path("M18 6L6 18M6 6l12 12"); }
-    .icon-chevron-down { d: path("M6 9l6 6 6-6"); }
-    .icon-chevron-up { d: path("M18 15l-6-6-6 6"); }
-    .icon-sort { d: path("M12 5v14M8 9l4-4 4 4M8 15l4 4 4-4"); }
-    .icon-zoom { d: path("M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"); }
   </style>
 </head>
 <body>
+
+<svg style="display: none;">
+  <defs>
+    <g id="icon-menu"><path d="M3 12h18M3 6h18M3 18h18"/></g>
+    <g id="icon-grid"><path d="M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z"/></g>
+    <g id="icon-list"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></g>
+    <g id="icon-eye"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/></g>
+    <g id="icon-eye-off"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></g>
+    <g id="icon-lock"><path d="M7 11V7a5 5 0 0 1 10 0v4 M3 11h18v11H3z"/></g>
+    <g id="icon-unlock"><path d="M7 11V7a5 5 0 0 1 9.9-1 M3 11h18v11H3z"/></g>
+    <g id="icon-settings"><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></g>
+    <g id="icon-copy"><path d="M9 9h10v10H9z M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></g>
+    <g id="icon-phone"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></g>
+    <g id="icon-activity"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></g>
+    <g id="icon-clock"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M12 6v6l4 2"/></g>
+    <g id="icon-users"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75"/></g>
+    <g id="icon-x"><path d="M18 6L6 18M6 6l12 12"/></g>
+    <g id="icon-chevron-down"><path d="M6 9l6 6 6-6"/></g>
+    <g id="icon-chevron-up"><path d="M18 15l-6-6-6 6"/></g>
+    <g id="icon-sort"><path d="M12 5v14M8 9l4-4 4 4M8 15l4 4 4-4"/></g>
+    <g id="icon-zoom"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></g>
+    <g id="icon-check"><path d="M5 13l4 4L19 7"/></g>
+  </defs>
+</svg>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 <div class="sidebar" id="appSidebar">
     <div class="sidebar-header">
         <h2>Menu</h2>
-        <button class="sidebar-close" onclick="toggleSidebar()"><svg><path class="icon-x"/></svg></button>
+        <button class="sidebar-close" onclick="toggleSidebar()"><svg><use href="#icon-x"></use></svg></button>
     </div>
     
     <span class="label">View</span>
-    <button class="btn active" id="sbViewGrid" onclick="switchView('grid'); toggleSidebar()"><svg><path class="icon-grid"/></svg> Grid</button>
-    <button class="btn" id="sbViewList" onclick="switchView('list'); toggleSidebar()"><svg><path class="icon-list"/></svg> List</button>
+    <button class="btn active" id="sbViewGrid" onclick="switchView('grid'); toggleSidebar()"><svg><use href="#icon-grid"></use></svg> Grid</button>
+    <button class="btn" id="sbViewList" onclick="switchView('list'); toggleSidebar()"><svg><use href="#icon-list"></use></svg> List</button>
     
     <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
     
     <span class="label">Filters</span>
-    <button class="btn" id="sbHideEmpty" onclick="toggleHideEmpty()"><svg id="iconSbHide"><path class="icon-eye"/></svg> <span id="textSbHide">All Queues</span></button>
+    <button class="btn" id="sbHideEmpty" onclick="toggleHideEmpty()">
+        <svg id="iconSbHide"><use href="#icon-eye"></use></svg> <span id="textSbHide">All Queues</span>
+    </button>
     
     <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
     
-    <button class="btn" onclick="openSettings(); toggleSidebar()"><svg><path class="icon-settings"/></svg> Settings</button>
+    <button class="btn" onclick="openSettings(); toggleSidebar()"><svg><use href="#icon-settings"></use></svg> Settings</button>
 </div>
 
 <div class="top-bar">
   <div class="top-bar-left">
-      <button class="hamburger" onclick="toggleSidebar()"><svg><path class="icon-menu"/></svg></button>
-      <h1><svg><path class="icon-phone"/></svg> Active Queues</h1>
+      <button class="hamburger" onclick="toggleSidebar()"><svg><use href="#icon-menu"></use></svg></button>
+      <h1><svg><use href="#icon-phone"></use></svg> Active Queues</h1>
   </div>
   
   <div class="mobile-controls">
       <button class="btn btn-icon" id="mobileSortCycleBtn" onclick="cycleSort()" title="Sort">
-          <svg id="mobSortSvg"><path class="icon-sort"/></svg>
+          <svg id="mobSortSvg"><use href="#icon-sort"></use></svg>
       </button>
   </div>
 
   <div class="desktop-controls">
       <div class="zoom-wrapper" title="Scale Interface">
-          <svg style="color:var(--text-muted)"><path class="icon-zoom"/></svg>
-          <input type="range" id="zoomSlider" class="zoom-slider" min="0.7" max="1.3" step="0.05" value="1" oninput="changeZoom(this.value)">
+          <svg style="color:var(--text-muted)"><use href="#icon-zoom"></use></svg>
+          <input type="range" id="zoomSlider" class="zoom-slider" min="0.7" max="1.3" step="0.05" value="1" oninput="updateZoomLabel(this.value)" onchange="applyAndSaveZoom(this.value)">
           <span id="zoomValue" class="mono" style="font-size:11px; width:36px; text-align:right;">100%</span>
       </div>
 
@@ -329,18 +348,18 @@
 
       <div style="width: 1px; height: 20px; background: var(--border); margin: 0 4px;"></div>
 
-      <button class="btn btn-icon active" id="viewGridBtn" onclick="switchView('grid')" title="Grid View"><svg><path class="icon-grid"/></svg></button>
-      <button class="btn btn-icon" id="viewListBtn" onclick="switchView('list')" title="List View"><svg><path class="icon-list"/></svg></button>
-      <button class="btn btn-icon" id="hideEmptyBtn" onclick="toggleHideEmpty()" title="Toggle Empty"><svg id="iconDeskHide"><path class="icon-eye"/></svg></button>
-      <button class="btn btn-icon" id="dragBtn" onclick="toggleDragMode()" title="Drag & Drop"><svg id="iconDrag"><path class="icon-lock"/></svg></button>
+      <button class="btn btn-icon active" id="viewGridBtn" onclick="switchView('grid')" title="Grid View"><svg><use href="#icon-grid"></use></svg></button>
+      <button class="btn btn-icon" id="viewListBtn" onclick="switchView('list')" title="List View"><svg><use href="#icon-list"></use></svg></button>
+      <button class="btn btn-icon" id="hideEmptyBtn" onclick="toggleHideEmpty()" title="Toggle Empty"><svg id="iconDeskHide"><use href="#icon-eye"></use></svg></button>
+      <button class="btn btn-icon" id="dragBtn" onclick="toggleDragMode()" title="Drag & Drop"><svg id="iconDrag"><use href="#icon-lock"></use></svg></button>
       
       <div style="width: 1px; height: 20px; background: var(--border); margin: 0 4px;"></div>
       
-      <button class="btn btn-icon" onclick="openSettings()" title="Settings"><svg><path class="icon-settings"/></svg></button>
+      <button class="btn btn-icon" onclick="openSettings()" title="Settings"><svg><use href="#icon-settings"></use></svg></button>
   </div>
 </div>
 
-<div id="status"><svg style="width:14px;height:14px"><path class="icon-activity"/></svg> <span>Connecting...</span></div>
+<div id="status"><svg style="width:14px;height:14px"><use href="#icon-activity"></use></svg> <span>Connecting...</span></div>
 
 <div class="grid" id="queuesGrid"></div>
 
@@ -359,12 +378,12 @@
 </div>
 
 <div class="mobile-fab-stats" id="mobileFabStats" onclick="toggleMobileStats()">
-    <svg><path class="icon-activity"/></svg>
+    <svg><use href="#icon-activity"></use></svg>
 </div>
 
 <div class="global-stats" id="statsBar">
     <div class="stats-toggle-tab" onclick="toggleStatsBar()" id="statsToggleIcon">
-        <svg style="width:14px;height:14px"><path class="icon-chevron-down" id="statsChevron"/></svg> Global Stats
+        <svg style="width:14px;height:14px" id="statsChevron"><use href="#icon-chevron-down"></use></svg> Global Stats
     </div>
     
     <div class="g-stat-item">
@@ -451,8 +470,6 @@
 </div>
 
 <script>
-  // Сервер Render больше не используется. Все данные поступают только по WebSockets.
-
   const defaultQueueNames = {
     Q700: "TrackEnsure Support", Q701: "TrackEnsure Support rus/ukr", Q801: "Callback rus/ukr", Q800: "Callback",
     Q791: "TrackEnsure New", Q750: "VIP Queue", Q702: "Fleet Supp", Q710: "Alfa Support",
@@ -488,18 +505,22 @@
   function detectName(raw) { if (!raw) return ""; const idx = raw.lastIndexOf(":"); return idx === -1 ? raw : raw.slice(idx + 1).trim(); }
 
   // --- ZOOM CONTROL ---
-  function applyZoom() {
+  function updateZoomLabel(val) {
+      const label = document.getElementById('zoomValue');
+      if(label) label.textContent = Math.round(val * 100) + '%';
+  }
+
+  function applyAndSaveZoom(val) {
+      localStorage.setItem('appZoom', val);
+      document.body.style.zoom = val;
+  }
+
+  function applyInitialZoom() {
       const z = localStorage.getItem('appZoom') || '1';
       document.body.style.zoom = z;
       const slider = document.getElementById('zoomSlider');
       if(slider) slider.value = z;
-      const val = document.getElementById('zoomValue');
-      if(val) val.textContent = Math.round(z * 100) + '%';
-  }
-  
-  function changeZoom(val) {
-      localStorage.setItem('appZoom', val);
-      applyZoom();
+      updateZoomLabel(z);
   }
 
   // --- UI FUNCTIONS ---
@@ -528,15 +549,12 @@
       const iconMob = document.getElementById('iconSbHide');
       const textMob = document.getElementById('textSbHide');
       
-      const svgEye = '<path class="icon-eye"/>';
-      const svgEyeOff = '<path class="icon-eye-off"/>';
-
       if (hideEmpty) {
-          if(btnDesk) { btnDesk.classList.add('active'); iconDesk.innerHTML = svgEyeOff; }
-          if(btnMob) { btnMob.classList.add('active'); iconMob.innerHTML = svgEyeOff; textMob.textContent = 'Hidden Empty'; }
+          if(btnDesk) { btnDesk.classList.add('active'); iconDesk.innerHTML = '<use href="#icon-eye-off"></use>'; }
+          if(btnMob) { btnMob.classList.add('active'); iconMob.innerHTML = '<use href="#icon-eye-off"></use>'; textMob.textContent = 'Hidden Empty'; }
       } else {
-          if(btnDesk) { btnDesk.classList.remove('active'); iconDesk.innerHTML = svgEye; }
-          if(btnMob) { btnMob.classList.remove('active'); iconMob.innerHTML = svgEye; textMob.textContent = 'All Queues'; }
+          if(btnDesk) { btnDesk.classList.remove('active'); iconDesk.innerHTML = '<use href="#icon-eye"></use>'; }
+          if(btnMob) { btnMob.classList.remove('active'); iconMob.innerHTML = '<use href="#icon-eye"></use>'; textMob.textContent = 'All Queues'; }
       }
   }
 
@@ -559,9 +577,9 @@
       
       const mobSvg = document.getElementById('mobSortSvg');
       if(mobSvg) {
-          if(val === 'custom') mobSvg.innerHTML = '<path class="icon-sort"/>';
-          if(val === 'calls') mobSvg.innerHTML = '<path class="icon-users"/>';
-          if(val === 'wait') mobSvg.innerHTML = '<path class="icon-clock"/>';
+          if(val === 'custom') mobSvg.innerHTML = '<use href="#icon-sort"></use>';
+          if(val === 'calls') mobSvg.innerHTML = '<use href="#icon-users"></use>';
+          if(val === 'wait') mobSvg.innerHTML = '<use href="#icon-clock"></use>';
       }
 
       const dragBtn = document.getElementById('dragBtn');
@@ -701,7 +719,7 @@
         <div class="queue-header">
             <div>
                 <div class="queue-name-wrap"><span class="queue-name">${name}</span> <span class="status-dot"></span></div>
-                <div class="queue-id">${qid} <span class="mobile-wait mono ${holdClass}" id="mob-hold-${qid}"><svg style="width:10px;height:10px"><path class="icon-clock"/></svg> ${formatTime(data.hold)}</span></div>
+                <div class="queue-id">${qid} <span class="mobile-wait mono ${holdClass}" id="mob-hold-${qid}"><svg style="width:10px;height:10px"><use href="#icon-clock"></use></svg> ${formatTime(data.hold)}</span></div>
             </div>
             <div class="queue-count mono" id="count-${qid}">${data.queued_calls}</div>
         </div>
@@ -731,7 +749,7 @@
       const tr = document.createElement('tr'); tr.className = 'queue-row'; tr.id = `row-${qid}`; tr.onclick = () => { tr.classList.toggle('expanded'); document.getElementById(`detail-${qid}`).classList.toggle('open'); applySorting(); };
       const holdClass = getHoldColorClass(data.hold);
       tr.innerHTML = `
-        <td><div style="display:flex; align-items:center; gap:8px"><svg style="color:var(--text-muted)"><path class="icon-chevron-down"/></svg> <strong>${name}</strong> <span class="mono" style="font-size:10px;color:var(--text-muted);">${qid}</span></div></td>
+        <td><div style="display:flex; align-items:center; gap:8px"><svg style="color:var(--text-muted)"><use href="#icon-chevron-down"></use></svg> <strong>${name}</strong> <span class="mono" style="font-size:10px;color:var(--text-muted);">${qid}</span></div></td>
         <td><span id="l-hold-${qid}" class="mono ${holdClass}">${formatTime(data.hold)}</span></td>
         <td><span class="badge-count mono" id="l-badge-${qid}">${data.queued_calls}</span></td>
         <td class="mono"><span id="l-logged-${qid}">${data.logged_in}</span> / <span id="l-avail-${qid}">${data.available}</span></td>
@@ -747,7 +765,7 @@
       const dragBtn = document.getElementById('dragBtn'); 
       const iconDrag = document.getElementById('iconDrag');
       dragBtn.classList.toggle("active", isDragEnabled); 
-      iconDrag.innerHTML = isDragEnabled ? '<path class="icon-unlock"/>' : '<path class="icon-lock"/>';
+      iconDrag.innerHTML = isDragEnabled ? '<use href="#icon-unlock"></use>' : '<use href="#icon-lock"></use>';
       document.querySelectorAll('.card').forEach(c => c.setAttribute('draggable', isDragEnabled)); 
   }
   
@@ -756,21 +774,21 @@
       const chevron = document.getElementById('statsChevron'); 
       bar.classList.toggle('minimized'); 
       if (bar.classList.contains('minimized')) { 
-          chevron.setAttribute('class', 'icon-chevron-up');
+          chevron.innerHTML = '<use href="#icon-chevron-up"></use>';
           localStorage.setItem('statsBarMinimized', 'true'); 
       } else { 
-          chevron.setAttribute('class', 'icon-chevron-down');
+          chevron.innerHTML = '<use href="#icon-chevron-down"></use>';
           localStorage.setItem('statsBarMinimized', 'false'); 
       }
   }
   
   if (localStorage.getItem('statsBarMinimized') === 'true' && window.innerWidth > 768) { 
       document.getElementById('statsBar').classList.add('minimized'); 
-      document.getElementById('statsChevron').setAttribute('class', 'icon-chevron-up'); 
+      document.getElementById('statsChevron').innerHTML = '<use href="#icon-chevron-up"></use>'; 
   }
   
   function getHoldColorClass(seconds) { if (seconds >= 600) return 't-red'; if (seconds >= 300) return 't-orange'; return 't-green'; }
-  function copyText(text, btnElement) { if (!text) return; navigator.clipboard.writeText(text).then(() => { const original = btnElement.innerHTML; btnElement.innerHTML = '<svg style="color:var(--status-ok)"><path d="M5 13l4 4L19 7"/></svg>'; setTimeout(() => btnElement.innerHTML = original, 1500); }); }
+  function copyText(text, btnElement) { if (!text) return; navigator.clipboard.writeText(text).then(() => { const original = btnElement.innerHTML; btnElement.innerHTML = '<svg style="color:var(--status-ok)"><use href="#icon-check"></use></svg>'; setTimeout(() => btnElement.innerHTML = original, 1500); }); }
 
   function updateQueueData(qid, raw) {
       queuesData[qid] = { queued_calls: Number(raw.queued_calls), logged_in: raw.logged_in_members, available: raw.available_members, hold: Number(raw.longest_hold_time || 0) };
@@ -805,7 +823,7 @@
       const render = (val) => {
           const fmt = formatTime(val); const colorClass = getHoldColorClass(val);
           const gh = document.getElementById(`hold-${qid}`); if(gh) { gh.textContent=fmt; gh.className=`val mono ${colorClass}`; }
-          const mh = document.getElementById(`mob-hold-${qid}`); if(mh) { mh.innerHTML=`<svg style="width:10px;height:10px"><path class="icon-clock"/></svg> ${fmt}`; mh.className=`mobile-wait mono ${colorClass}`; }
+          const mh = document.getElementById(`mob-hold-${qid}`); if(mh) { mh.innerHTML=`<svg style="width:10px;height:10px"><use href="#icon-clock"></use></svg> ${fmt}`; mh.className=`mobile-wait mono ${colorClass}`; }
           const lh = document.getElementById(`l-hold-${qid}`); if(lh) { lh.textContent=fmt; lh.className=`mono ${colorClass}`; }
       };
       render(hold);
@@ -820,7 +838,7 @@
       const generateHTML = (list) => {
           if (!list.length) return '<div style="display:flex; height:100%; align-items:center; justify-content:center; color:var(--text-muted); font-size:12px; font-style:italic;">No active callers</div>';
           return list.map((c, i) => {
-              const copyBtn = c.number ? `<button class="action-btn copy-btn" onclick="event.stopPropagation(); copyText('${c.number}', this)" title="Copy"><svg><path class="icon-copy"/></svg></button>` : '';
+              const copyBtn = c.number ? `<button class="action-btn copy-btn" onclick="event.stopPropagation(); copyText('${c.number}', this)" title="Copy"><svg><use href="#icon-copy"></use></svg></button>` : '';
               let timerHTML = '';
               if (c.joinTime) {
                   const now = Date.now(); const durationSec = Math.floor((now - c.joinTime) / 1000);
@@ -858,7 +876,7 @@
   let dragSrcEl = null;
 
   function connectWebSocket() {
-    statusEl.innerHTML = `<svg style="width:14px;height:14px"><path class="icon-activity"/></svg> <span>Connecting...</span>`;
+    statusEl.innerHTML = `<svg style="width:14px;height:14px"><use href="#icon-activity"></use></svg> <span>Connecting...</span>`;
     const socket = new WebSocket("wss://trackensure.gitstel.net/sw-monitor/?EIO=3&transport=websocket");
     socket.onopen = () => { statusEl.innerHTML = `<span style="color:var(--status-ok); display:flex; align-items:center; gap:6px;"><span class="status-dot" style="background:var(--status-ok); box-shadow:0 0 6px var(--status-ok)"></span> Connected</span>`; };
     socket.onmessage = (event) => {
@@ -898,7 +916,7 @@
         } catch (err) {}
       }
     };
-    socket.onclose = () => { statusEl.innerHTML = `<span style="color:var(--status-err); display:flex; align-items:center; gap:6px;"><svg style="width:14px;height:14px"><path class="icon-x"/></svg> Disconnected...</span>`; setTimeout(connectWebSocket, 5000); };
+    socket.onclose = () => { statusEl.innerHTML = `<span style="color:var(--status-err); display:flex; align-items:center; gap:6px;"><svg style="width:14px;height:14px"><use href="#icon-x"></use></svg> Disconnected...</span>`; setTimeout(connectWebSocket, 5000); };
   }
 
   function openSettings() {
@@ -907,7 +925,7 @@
     document.querySelector('select[name="theme"]').value = getTheme();
     
     Object.entries(getAllQueues()).forEach(([qid, name]) => {
-      const isCustom = custom.hasOwnProperty(qid); const delBtn = isCustom ? `<button class="del-btn" onclick="event.preventDefault(); removeCustomQueue('${qid}')"><svg><path class="icon-x"/></svg></button>` : '';
+      const isCustom = custom.hasOwnProperty(qid); const delBtn = isCustom ? `<button class="del-btn" onclick="event.preventDefault(); removeCustomQueue('${qid}')"><svg><use href="#icon-x"></use></svg></button>` : '';
       const div = document.createElement('div'); 
       div.innerHTML = `<label><div style="display:flex; align-items:center; gap:8px;"><input type="checkbox" name="queues" value="${qid}" ${visible.includes(qid) ? 'checked' : ''}> <span class="mono" style="font-size:11px; color:var(--text-muted)">${qid}</span> ${name} ${isCustom?'<span class="label" style="display:inline">CUSTOM</span>':''}</div>${delBtn}</label>`;
       qList.appendChild(div);
@@ -931,14 +949,14 @@
   }, 1000);
 
   // Initialize
-  applyZoom(); 
+  applyInitialZoom(); 
   document.body.className = getTheme();
   document.getElementById('sortSelectDesk').value = currentSort;
   const cycleBtn = document.getElementById('mobileSortCycleBtn');
   if(cycleBtn) {
-      if(currentSort === 'custom') cycleBtn.innerHTML = '<svg><path class="icon-sort"/></svg>';
-      if(currentSort === 'calls') cycleBtn.innerHTML = '<svg><path class="icon-users"/></svg>';
-      if(currentSort === 'wait') cycleBtn.innerHTML = '<svg><path class="icon-clock"/></svg>';
+      if(currentSort === 'custom') cycleBtn.innerHTML = '<svg><use href="#icon-sort"></use></svg>';
+      if(currentSort === 'calls') cycleBtn.innerHTML = '<svg><use href="#icon-users"></use></svg>';
+      if(currentSort === 'wait') cycleBtn.innerHTML = '<svg><use href="#icon-clock"></use></svg>';
   }
   updateHideEmptyUI();
   switchView(currentView);
