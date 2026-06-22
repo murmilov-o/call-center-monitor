@@ -5,258 +5,347 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Моніторинг черг</title>
   
-  <link rel="icon" type="image/png" href="favicon.png">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📞</text></svg>">
-
   <style>
-    /* --- 1. GLOBAL RESET --- */
+    /* --- DESIGN SYSTEM (GRAPHITE & MINIMAL) --- */
+    :root {
+      --bg-body: #f3f4f6;
+      --bg-card: #ffffff;
+      --bg-panel: #1f2937;
+      --text-main: #111827;
+      --text-muted: #6b7280;
+      --border: #e5e7eb;
+      --accent: #374151; 
+      --accent-hover: #4b5563;
+      --accent-light: #f3f4f6;
+      
+      --status-ok: #10b981;
+      --status-ok-bg: rgba(16, 185, 129, 0.1);
+      --status-warn: #f59e0b;
+      --status-warn-bg: rgba(245, 158, 11, 0.1);
+      --status-err: #ef4444;
+      --status-err-bg: rgba(239, 68, 68, 0.1);
+      
+      --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    body.dark {
+      --bg-body: #0f172a;
+      --bg-card: #1e293b;
+      --bg-panel: #0b1120;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --border: #334155;
+      --accent: #64748b;
+      --accent-hover: #94a3b8;
+      --accent-light: #334155;
+      
+      --status-ok: #34d399;
+      --status-warn: #fbbf24;
+      --status-err: #f87171;
+    }
+
+    /* --- GLOBAL RESET --- */
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; padding-bottom: 90px; margin: 0; background: #f2f2f2; color: #333; transition: background 0.3s, color 0.3s; overflow-x: hidden; }
-    body.dark { background: #1e1e1e; color: #ddd; }
+    body { font-family: var(--font-ui); padding: 20px; padding-bottom: 90px; margin: 0; background: var(--bg-body); color: var(--text-main); transition: background 0.3s, color 0.3s; overflow-x: hidden; font-size: 14px; }
     .hidden { display: none !important; }
     
-    /* ANIMATIONS */
-    @keyframes pulse-red { 0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); } 70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); } 100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); } }
-    @keyframes text-pulse { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
-
-    /* --- STATUS COLORS (CARDS) --- */
-    .status-green { background-color: #e8f5e9 !important; border-left: 6px solid #2ecc71 !important; color: #1b5e20 !important; }
-    body.dark .status-green { background-color: #1e3a23 !important; color: #c8e6c9 !important; }
-
-    .status-orange { background-color: #fff3cd !important; border-left: 6px solid #f39c12 !important; color: #856404 !important; }
-    body.dark .status-orange { background-color: #4e3e20 !important; color: #ffda6a !important; }
-
-    .status-red { background-color: #e74c3c !important; color: white !important; border-left: 6px solid #c0392b !important; animation: pulse-red 1.5s infinite; }
-    .status-red .queue-id, .status-red .local-stats-block, .status-red .queue-info-block { color: rgba(255,255,255,0.9) !important; border-color: rgba(255,255,255,0.3) !important; }
+    /* UTILITIES */
+    .mono { font-family: var(--font-mono); font-weight: 500; font-variant-numeric: tabular-nums; }
+    .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); display: block; margin-bottom: 2px; }
     
-    /* --- TIMER COLORS --- */
-    .timer-badge { font-weight: bold; font-family: monospace; margin-left: 5px; padding: 1px 4px; border-radius: 4px; display: inline-block;}
-    .t-green { color: #27ae60; background: rgba(39, 174, 96, 0.1); }
-    .t-orange { color: #d35400; background: rgba(211, 84, 0, 0.1); }
-    .t-red { color: #c0392b; background: rgba(192, 57, 43, 0.1); animation: text-pulse 1s infinite; }
-    body.dark .t-green { color: #2ecc71; background: rgba(46, 204, 113, 0.2); }
-    body.dark .t-orange { color: #e67e22; background: rgba(230, 126, 34, 0.2); }
-    body.dark .t-red { color: #e74c3c; background: rgba(231, 76, 60, 0.2); }
-    .status-red .t-green, .status-red .t-orange, .status-red .t-red { color: white; background: rgba(0,0,0,0.2); }
+    /* ICONS */
+    svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; display: inline-block; vertical-align: middle; }
 
-    /* --- COMPONENTS --- */
-    .btn { cursor: pointer; font-size: 15px; background: #fff; border: 1px solid #ccc; padding: 6px 14px; border-radius: 6px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; color: #333; }
-    .btn:hover { background-color: #e9e9e9; }
-    .btn.active { background-color: #d4edda; border-color: #28a745; color: #155724; }
-    .btn.primary { background-color: #007bff; color: white; border-color: #007bff; }
-    body.dark .btn { background: #444; border-color: #666; color: #eee; }
-    body.dark .btn:hover { background-color: #555; }
-    body.dark .btn.active { background-color: #235d3a; border-color: #28a745; color: #fff; }
+    /* BUTTONS & CONTROLS */
+    .btn { cursor: pointer; font-family: var(--font-ui); font-size: 14px; font-weight: 500; background: var(--bg-card); border: 1px solid var(--border); padding: 6px 12px; border-radius: 6px; transition: 0.2s; display: inline-flex; align-items: center; justify-content: center; color: var(--text-main); gap: 6px; }
+    .btn:hover { background: var(--accent-light); border-color: var(--accent); }
+    .btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.primary { background: #2563eb; color: white; border-color: #2563eb; }
+    .btn.primary:hover { background: #1d4ed8; }
+    .btn-icon { padding: 6px 8px; }
 
-    select.btn { padding: 6px 12px; font-family: inherit; font-size: 14px; }
-    
-    /* HEADER & SIDEBAR */
-    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    /* ZOOM SLIDER */
+    .zoom-wrapper { display: flex; align-items: center; gap: 8px; background: var(--bg-card); border: 1px solid var(--border); padding: 4px 12px; border-radius: 6px; }
+    .zoom-slider { -webkit-appearance: none; width: 80px; height: 4px; background: var(--border); border-radius: 2px; outline: none; cursor: pointer;}
+    .zoom-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%; background: var(--text-muted); cursor: pointer; transition: 0.2s;}
+    .zoom-slider::-webkit-slider-thumb:hover { background: var(--text-main); transform: scale(1.2); }
+
+    select.btn { appearance: none; padding-right: 28px; background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%236b7280" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6"></path></svg>'); background-repeat: no-repeat; background-position-x: calc(100% - 8px); background-position-y: center; background-size: 14px; }
+    body.dark select.btn { background-image: url('data:image/svg+xml;utf8,<svg fill="none" stroke="%2394a3b8" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6"></path></svg>'); }
+
+    /* TOP BAR */
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; border-bottom: 1px solid var(--border); padding-bottom: 15px; }
     .top-bar-left { display: flex; align-items: center; gap: 15px; }
-    h1 { margin: 0; font-size: 24px; white-space: nowrap; }
-    .hamburger { display: none; background: none; border: none; font-size: 28px; cursor: pointer; color: inherit; padding: 0; }
+    h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -0.5px; display: flex; align-items: center; gap: 8px;}
+    .hamburger { display: none; background: none; border: none; cursor: pointer; color: var(--text-main); padding: 0; }
     .desktop-controls { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-    .mobile-controls { display: none; } 
-    #status { margin-bottom: 20px; font-size: 14px; color: #666; }
-    body.dark #status { color: #aaa; }
+    .mobile-controls { display: none; }
+    
+    #status { margin-bottom: 20px; font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 6px; font-weight: 500;}
 
-    /* SIDEBAR (MOBILE MENU) */
-    .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3999; display: none; opacity: 0; transition: opacity 0.3s; }
+    /* SIDEBAR */
+    .sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 3999; display: none; opacity: 0; transition: opacity 0.3s; backdrop-filter: blur(2px); }
     .sidebar-overlay.open { display: block; opacity: 1; }
-    .sidebar { position: fixed; left: -280px; top: 0; width: 280px; height: 100%; background: #fff; z-index: 4000; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 20px; display: flex; flex-direction: column; gap: 15px; box-shadow: 2px 0 10px rgba(0,0,0,0.2); }
+    .sidebar { position: fixed; left: -280px; top: 0; width: 280px; height: 100%; background: var(--bg-card); border-right: 1px solid var(--border); z-index: 4000; transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 20px; display: flex; flex-direction: column; gap: 12px; }
     .sidebar.open { left: 0; }
-    body.dark .sidebar { background: #252525; box-shadow: 2px 0 10px rgba(0,0,0,0.7); }
-    .sidebar h2 { margin-top: 0; border-bottom: 1px solid #ddd; padding-bottom: 15px; font-size: 20px;}
-    body.dark .sidebar h2 { border-color: #444; }
-    .sidebar .btn { justify-content: flex-start; padding: 12px 15px; font-size: 16px; border: none; background: #f8f9fa; border-radius: 8px;}
-    body.dark .sidebar .btn { background: #333; }
-    .sidebar .btn.active { background: #d4edda; }
-    body.dark .sidebar .btn.active { background: #235d3a; }
-    .sidebar-close { position: absolute; top: 15px; right: 15px; background: none; border: none; font-size: 24px; cursor: pointer; color: inherit; }
+    .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+    .sidebar h2 { margin: 0; font-size: 16px; font-weight: 600;}
+    .sidebar .btn { justify-content: flex-start; padding: 10px 15px; font-size: 14px; border: none; background: transparent; }
+    .sidebar .btn:hover { background: var(--accent-light); }
+    .sidebar .btn.active { background: var(--accent); color: #fff; }
+    .sidebar-close { background: none; border: none; cursor: pointer; color: var(--text-muted); }
 
     /* GRID & CARDS */
-    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; width: 100%; }
-    .card { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: flex; flex-direction: column; transition: background 0.3s, border-color 0.3s; border-left: 6px solid #ccc; position: relative; }
-    body.dark .card { background: #2e2e2e; color: #eee; border-color: #555; }
-    .card.dragging { opacity: 0.4; border: 2px dashed #999; }
-    .queue-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;}
-    .queue-name { font-weight: bold; font-size: 18px; margin-bottom: 4px; pointer-events: none; }
-    .queue-id { font-size: 13px; color: #565656; pointer-events: none; }
-    body.dark .queue-id { color: #aaa; }
-    .queue-count { font-size: 40px; font-weight: bold; pointer-events: none; line-height: 1; }
-    .mobile-wait { display: none; font-size: 12px; margin-left: 8px; padding: 2px 6px; border-radius: 4px; background: rgba(0,0,0,0.05); }
-    body.dark .mobile-wait { background: rgba(255,255,255,0.1); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; width: 100%; }
+    .card { background: var(--bg-card); border-radius: 8px; padding: 16px; border: 1px solid var(--border); border-left-width: 4px; display: flex; flex-direction: column; transition: transform 0.1s, border-color 0.2s; position: relative; }
+    .card.dragging { opacity: 0.5; border-style: dashed; }
+    
+    .queue-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;}
+    .queue-name-wrap { display: flex; align-items: center; gap: 8px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--status-ok); }
+    .queue-name { font-weight: 600; font-size: 15px; pointer-events: none; }
+    .queue-id { font-size: 11px; color: var(--text-muted); font-family: var(--font-mono); margin-top: 2px; pointer-events: none; }
+    .queue-count { font-size: 36px; line-height: 1; pointer-events: none; color: var(--text-main); }
+    
+    .mobile-wait { display: none; font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--accent-light); color: var(--text-muted); margin-left: 8px; }
+    
+    /* Card Micro-Stats Grid */
+    .card-stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding-top: 12px; border-top: 1px solid var(--border); margin-top: auto; }
+    .stat-box { display: flex; flex-direction: column; }
+    .stat-box .val { font-size: 13px; color: var(--text-main); }
     
     .collapsible-content { display: flex; flex-direction: column; flex-grow: 1; justify-content: space-between; }
-    .local-stats-block { font-size: 11px; color: #666; margin-top: 5px; padding-top: 5px; border-top: 1px solid rgba(0,0,0,0.1); display: flex; justify-content: space-between; }
-    body.dark .local-stats-block { color: #aaa; border-color: rgba(255,255,255,0.1); }
-    .card-indicator { display: none; text-align: center; font-size: 12px; opacity: 0.5; margin-top: 5px; }
+    .card-indicator { display: none; text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 8px; text-transform: uppercase; letter-spacing: 0.5px;}
 
-    /* LIST */
-    .list-container { width: 100%; overflow-x: auto; background: white; border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-    body.dark .list-container { background: #2e2e2e; }
-    table { width: 100%; border-collapse: collapse; min-width: 600px; }
-    th { text-align: left; padding: 12px; border-bottom: 2px solid #ddd; font-size: 14px; color: #555; background-color: #f8f8f8; }
-    body.dark th { border-color: #444; color: #aaa; background-color: #333; }
-    td { padding: 12px; border-bottom: 1px solid #eee; vertical-align: middle; font-size: 14px; }
-    body.dark td { border-color: #444; }
-    .queue-row { cursor: pointer; transition: background 0.1s; border-left: 6px solid transparent; }
-    .queue-row:hover { background-color: #f0f0f0; }
-    body.dark .queue-row:hover { background-color: #383838; }
-    .detail-row { display: none; background-color: #fafafa; }
-    body.dark .detail-row { background-color: #252525; }
+    /* STATUS COLORS */
+    .s-green { border-left-color: var(--status-ok); }
+    .s-green .status-dot { background: var(--status-ok); box-shadow: 0 0 8px var(--status-ok-bg); }
+    .s-green .queue-count { color: var(--text-main); }
+    
+    .s-orange { border-left-color: var(--status-warn); }
+    .s-orange .status-dot { background: var(--status-warn); box-shadow: 0 0 8px var(--status-warn-bg); }
+    
+    .s-red { border-left-color: var(--status-err); }
+    .s-red .status-dot { background: var(--status-err); box-shadow: 0 0 8px var(--status-err-bg); }
+    
+    /* TEXT TIMERS */
+    .t-green { color: var(--status-ok); }
+    .t-orange { color: var(--status-warn); font-weight: 600; }
+    .t-red { color: var(--status-err); font-weight: bold; }
+
+    /* LIST VIEW */
+    .list-container { width: 100%; overflow-x: auto; background: var(--bg-card); border-radius: 8px; border: 1px solid var(--border); }
+    table { width: 100%; border-collapse: collapse; min-width: 600px; text-align: left; }
+    th { padding: 12px 16px; border-bottom: 1px solid var(--border); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-muted); font-weight: 600; background: var(--accent-light); }
+    td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; font-size: 13px; }
+    .queue-row { cursor: pointer; transition: background 0.1s; border-left: 4px solid transparent; }
+    .queue-row:hover { background-color: var(--accent-light); }
+    .detail-row { display: none; background-color: var(--bg-body); }
     .detail-row.open { display: table-row; }
-    .detail-content { padding: 15px; max-height: 300px; overflow-y: auto; border-bottom: 1px solid #ddd; }
+    .detail-content { padding: 16px; max-height: 300px; overflow-y: auto; border-bottom: 1px solid var(--border); }
+    .badge-count { display: inline-block; padding: 2px 8px; border-radius: 12px; font-weight: 600; background: var(--accent-light); font-size: 12px;}
 
-    /* CALLERS */
-    .callers-list { font-size: 14px; line-height: 1.6; flex-grow: 1; margin: 6px 0 8px 0; }
-    .caller-row { display: flex; align-items: center; margin-bottom: 5px; border-bottom: 1px dotted #ccc; padding-bottom: 2px;}
-    .caller-index { margin-right: 8px; font-weight: bold; opacity: 0.7; min-width: 20px; }
-    .caller-info { white-space: normal; overflow: visible; flex-grow: 1; margin: 0 5px; line-height: 1.3;}
-    .action-btn { cursor: pointer; width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center; border-radius: 4px; transition: 0.2s; font-size: 16px; margin: 0 2px; }
-    .action-btn:hover { background-color: rgba(0,0,0,0.1); transform: scale(1.1); }
+    /* CALLERS (FIXED HEIGHT) */
+    .callers-list { 
+        font-size: 13px; 
+        margin: 12px 0 16px 0; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 6px; 
+        height: 110px; 
+        overflow-y: auto; 
+        padding-right: 4px;
+    }
+    
+    .callers-list::-webkit-scrollbar { width: 4px; }
+    .callers-list::-webkit-scrollbar-track { background: transparent; }
+    .callers-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    .callers-list:hover::-webkit-scrollbar-thumb { background: var(--text-muted); }
 
-    /* TOOLTIPS & GLOBAL BAR */
-    .stat-container { position: relative; display: inline-block; cursor: help; }
-    .stat-tooltip { visibility: hidden; width: 120px; background-color: rgba(0,0,0,0.9); color: #fff; text-align: left; border-radius: 6px; padding: 8px; position: absolute; z-index: 9999; bottom: 125%; left: 50%; margin-left: -60px; opacity: 0; transition: 0.3s; font-size: 11px; pointer-events: none; }
-    .stat-tooltip::after { content: ""; position: absolute; top: 100%; left: 50%; margin-left: -5px; border-width: 5px; border-style: solid; border-color: rgba(0,0,0,0.9) transparent transparent transparent; }
+    .caller-row { display: flex; align-items: center; padding: 6px 8px; background: var(--accent-light); border-radius: 4px; flex-shrink: 0;}
+    .caller-index { color: var(--text-muted); font-size: 11px; width: 18px; }
+    .caller-info { flex-grow: 1; display: flex; justify-content: space-between; align-items: center; padding-right: 10px;}
+    .caller-name { font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .caller-lang { font-size: 9px; padding: 2px 4px; border-radius: 2px; border: 1px solid var(--border); text-transform: uppercase; color: var(--text-muted);}
+    .action-btn { cursor: pointer; background: transparent; border: none; color: var(--text-muted); padding: 4px; border-radius: 4px; transition: 0.2s; display: flex; align-items: center;}
+    .action-btn:hover { background: var(--border); color: var(--text-main); }
+    .action-btn svg { width: 14px; height: 14px; }
+
+    /* TOOLTIPS */
+    .stat-container { position: relative; display: inline-block; cursor: help; border-bottom: 1px dotted var(--text-muted); }
+    .stat-tooltip { visibility: hidden; width: 110px; background-color: var(--bg-panel); color: #fff; text-align: left; border-radius: 4px; padding: 8px; position: absolute; z-index: 9999; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: 0.2s; font-size: 11px; pointer-events: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
     .stat-container:hover .stat-tooltip { visibility: visible; opacity: 1; }
 
-    .global-stats { position: fixed; bottom: 0; left: 0; right: 0; background: #2c3e50; color: white; box-shadow: 0 -2px 10px rgba(0,0,0,0.2); z-index: 2000; display: flex; justify-content: center; align-items: center; padding: 10px 0; font-size: 14px; gap: 30px; min-height: 70px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    body.dark .global-stats { background: #252525; border-top: 1px solid #444; }
+    /* GLOBAL BAR (BOTTOM) */
+    .global-stats { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-panel); color: #e2e8f0; z-index: 2000; display: flex; justify-content: center; align-items: center; padding: 12px 0; gap: 40px; min-height: 60px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-top: 1px solid rgba(255,255,255,0.1); }
     .global-stats.minimized { transform: translateY(100%); }
     
-    .stats-toggle-tab { 
-        position: absolute; top: -28px; left: 50%; transform: translateX(-50%); 
-        background: #2c3e50; color: white; padding: 6px 25px; border-radius: 8px 8px 0 0; 
-        cursor: pointer; font-size: 13px; z-index: 2001; transition: 0.3s; font-weight: bold;
-    }
-    body.dark .stats-toggle-tab { background: #252525; border: 1px solid #444; border-bottom: none; }
+    .stats-toggle-tab { position: absolute; top: -26px; left: 50%; transform: translateX(-50%); background: var(--bg-panel); color: #94a3b8; padding: 4px 20px; border-radius: 6px 6px 0 0; cursor: pointer; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; z-index: 2001; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); border-bottom: none; display: flex; align-items: center; gap: 6px;}
+    .stats-toggle-tab:hover { color: #fff; }
     
-    .g-stat-item { text-align: center; min-width: 90px; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 20px; display: flex; flex-direction: column; justify-content: center; }
-    .g-stat-item:last-child { border: none; }
-    .g-stat-label { display: block; font-size: 10px; opacity: 0.7; text-transform: uppercase; margin-bottom: 5px; }
-    .g-stat-value { display: block; font-size: 20px; font-weight: bold; line-height: 1; }
-    .top-list { font-size: 12px; text-align: left; display: inline-block; }
+    .g-stat-item { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; border-right: 1px solid rgba(255,255,255,0.1); padding-right: 40px;}
+    .g-stat-item:last-child { border: none; padding-right: 0;}
+    .g-stat-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .g-stat-value { font-size: 18px; font-weight: 500; font-family: var(--font-mono); color: #fff; }
+    .top-list { font-size: 12px; font-family: var(--font-mono); display: flex; flex-direction: column; gap: 2px;}
     .mobile-fab-stats { display: none; }
 
     /* MODALS */
-    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; justify-content: center; align-items: center; z-index: 5000; }
-    .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
-    body.dark .modal-content { background: #2b2b2b; color: #eee; }
-    .settings-group { margin-bottom: 15px; border-bottom: 1px solid #ddd; padding-bottom: 15px; }
-    body.dark .settings-group { border-color: #444; }
-    input[type="text"] { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #ccc; background: #fff; color: #000; margin-top: 5px; font-size: 16px;}
-    body.dark input[type="text"] { background: #3a3a3a; border-color: #666; color: #eee; }
-    .add-queue-form { display: flex; gap: 8px; margin-top: 5px; }
-    .delete-q-btn { background: none; border: none; color: #ff4444; cursor: pointer; font-size: 18px; transition: 0.2s; padding: 5px;}
-    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+    .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(2px); display: none; justify-content: center; align-items: center; z-index: 5000; }
+    .modal-content { background: var(--bg-card); padding: 24px; border-radius: 8px; width: 90%; max-width: 450px; max-height: 85vh; overflow-y: auto; box-shadow: 0 10px 25px rgba(0,0,0,0.2); border: 1px solid var(--border); }
+    .modal-content h2 { margin-top: 0; font-size: 18px; margin-bottom: 20px; border-bottom: 1px solid var(--border); padding-bottom: 10px;}
+    .settings-group { margin-bottom: 20px; }
+    .settings-group strong { display: block; margin-bottom: 8px; font-size: 13px; }
+    input[type="text"] { width: 100%; padding: 8px 12px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-body); color: var(--text-main); font-family: var(--font-ui); font-size: 14px;}
+    input[type="text"]:focus { outline: none; border-color: var(--accent); }
+    .add-queue-form { display: flex; gap: 8px; }
+    .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; border-top: 1px solid var(--border); padding-top: 16px; }
+    .checkbox-list { display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto; padding-right: 5px; }
+    .checkbox-list label { display: flex; align-items: center; justify-content: space-between; font-size: 13px; background: var(--accent-light); padding: 6px 10px; border-radius: 4px;}
+    .del-btn { color: var(--status-err); background: none; border: none; cursor: pointer; padding: 2px;}
 
     /* CHEATSHEET */
-    .cheatsheet { margin-top: 30px; padding: 20px; border-radius: 12px; background: #fff; display: flex; flex-wrap: wrap; gap: 40px; margin-bottom: 100px; }
-    body.dark .cheatsheet { background: #2e2e2e; color: #eee; }
-    .cheatsheet h3 { margin-top: 0; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
-    body.dark .cheatsheet h3 { border-color: #444; }
-    .cheatsheet ul { list-style: none; padding: 0; margin: 0; }
-    .cheatsheet li { margin: 4px 0; font-size: 14px; }
+    .cheatsheet { margin-top: 40px; margin-bottom: 100px; display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; }
+    .cs-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 8px; padding: 20px; }
+    .cs-box h3 { margin-top: 0; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); padding-bottom: 10px; margin-bottom: 15px; color: var(--text-muted); }
+    .cs-box ul { list-style: none; padding: 0; margin: 0; font-size: 13px; display: flex; flex-direction: column; gap: 8px;}
+    .cs-box li { display: flex; justify-content: space-between; }
+    .cs-box .mono { color: var(--text-muted); }
 
     /* --- MOBILE ADAPTATION --- */
     @media (max-width: 768px) {
-        body { padding: 15px; padding-bottom: 80px; }
+        body { padding: 12px; padding-bottom: 80px; }
         
         .desktop-controls { display: none; }
         .hamburger { display: block; }
-        .top-bar { flex-wrap: nowrap; margin-bottom: 15px; }
+        .top-bar { flex-wrap: nowrap; margin-bottom: 16px; padding-bottom: 12px;}
         .top-bar-left { flex-grow: 1; }
         h1 { font-size: 18px; margin-right: 10px; }
         
-        .mobile-controls { display: flex; align-items: center; gap: 10px; }
+        .mobile-controls { display: flex; align-items: center; gap: 8px; }
+        .btn-icon { padding: 6px; }
         
-        .grid { gap: 12px; }
-        .card { padding: 15px; min-height: auto; cursor: pointer; overflow: hidden; }
+        .grid { gap: 12px; grid-template-columns: 1fr; }
+        .card { padding: 12px 16px; cursor: pointer; overflow: hidden; border-left-width: 3px;}
         .queue-header { margin-bottom: 0; align-items: center; }
-        .queue-name { font-size: 16px; margin-bottom: 2px; }
-        .queue-count { font-size: 32px; }
-        .queue-id { font-size: 12px; }
-        .mobile-wait { display: inline-block; }
+        .queue-name { font-size: 15px; margin-bottom: 0; }
+        .queue-count { font-size: 28px; }
+        .queue-id { display: none; } 
+        .mobile-wait { display: inline-flex; align-items: center; gap: 4px; }
         
-        .collapsible-content { display: none; margin-top: 15px; border-top: 1px dashed #ccc; padding-top: 10px;}
-        body.dark .collapsible-content { border-color: #555; }
+        .collapsible-content { display: none; margin-top: 16px; border-top: 1px solid var(--border); padding-top: 4px;}
         .card.expanded .collapsible-content { display: flex; }
         .card-indicator { display: block; }
         .card.expanded .card-indicator { display: none; }
         
         .global-stats {
             transform: translateY(100%); flex-direction: column; align-items: stretch;
-            padding: 20px; border-top-left-radius: 20px; border-top-right-radius: 20px;
-            bottom: 0; box-shadow: 0 -5px 20px rgba(0,0,0,0.4); gap: 15px;
+            padding: 20px; border-top-left-radius: 12px; border-top-right-radius: 12px;
+            bottom: 0; box-shadow: 0 -10px 40px rgba(0,0,0,0.5); gap: 16px; border-top: 1px solid var(--border);
         }
         .global-stats.open { transform: translateY(0); }
-        .g-stat-item { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.1); padding-right: 0; padding-bottom: 10px; flex-direction: row; justify-content: space-between; align-items: center; text-align: left;}
+        .g-stat-item { border-right: none; border-bottom: 1px solid rgba(255,255,255,0.05); padding-right: 0; padding-bottom: 12px; flex-direction: row; justify-content: space-between; align-items: center; }
         .g-stat-item:last-child { border-bottom: none; padding-bottom: 0; }
-        .g-stat-label { margin-bottom: 0; font-size: 12px; }
+        .g-stat-label { margin-bottom: 0; }
         .stats-toggle-tab { display: none; } 
         
         .mobile-fab-stats {
-            display: flex; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            background: #2c3e50; color: white; padding: 12px 25px; border-radius: 30px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-weight: bold; font-size: 14px;
-            z-index: 1999; align-items: center; justify-content: center; width: auto; white-space: nowrap; transition: 0.3s;
+            display: flex; position: fixed; bottom: 20px; right: 20px;
+            background: var(--accent); color: white; width: 48px; height: 48px; border-radius: 50%;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 1999; align-items: center; justify-content: center; transition: transform 0.3s; cursor: pointer; border: 1px solid rgba(255,255,255,0.1);
         }
-        body.dark .mobile-fab-stats { background: #333; border: 1px solid #555; }
-        .mobile-fab-stats.hidden { transform: translate(-50%, 150%); }
+        .mobile-fab-stats.hidden { transform: scale(0); }
 
-        .cheatsheet { flex-direction: column; gap: 20px; padding: 15px; }
-        th, td { padding: 10px 5px; font-size: 13px;}
+        .cheatsheet { margin-top: 24px; gap: 16px; }
+        th, td { padding: 10px 8px; font-size: 12px;}
     }
+
+    /* SVG ICONS DEFS */
+    .icon-menu { d: path("M3 12h18M3 6h18M3 18h18"); }
+    .icon-grid { d: path("M3 3h7v7H3z M14 3h7v7h-7z M14 14h7v7h-7z M3 14h7v7H3z"); }
+    .icon-list { d: path("M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"); }
+    .icon-eye { d: path("M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"); }
+    .icon-eye-off { d: path("M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"); }
+    .icon-lock { d: path("M7 11V7a5 5 0 0 1 10 0v4 M3 11h18v11H3z"); }
+    .icon-unlock { d: path("M7 11V7a5 5 0 0 1 9.9-1 M3 11h18v11H3z"); }
+    .icon-settings { d: path("M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"); }
+    .icon-copy { d: path("M9 9h10v10H9z M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"); }
+    .icon-phone { d: path("M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"); }
+    .icon-activity { d: path("M22 12h-4l-3 9L9 3l-3 9H2"); }
+    .icon-clock { d: path("M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z M12 6v6l4 2"); }
+    .icon-users { d: path("M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2 M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M23 21v-2a4 4 0 0 0-3-3.87 M16 3.13a4 4 0 0 1 0 7.75"); }
+    .icon-x { d: path("M18 6L6 18M6 6l12 12"); }
+    .icon-chevron-down { d: path("M6 9l6 6 6-6"); }
+    .icon-chevron-up { d: path("M18 15l-6-6-6 6"); }
+    .icon-sort { d: path("M12 5v14M8 9l4-4 4 4M8 15l4 4 4-4"); }
+    .icon-zoom { d: path("M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"); }
   </style>
 </head>
 <body>
 
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 <div class="sidebar" id="appSidebar">
-    <button class="sidebar-close" onclick="toggleSidebar()">×</button>
-    <h2>Меню</h2>
+    <div class="sidebar-header">
+        <h2>Menu</h2>
+        <button class="sidebar-close" onclick="toggleSidebar()"><svg><path class="icon-x"/></svg></button>
+    </div>
     
-    <button class="btn active" id="sbViewGrid" onclick="switchView('grid'); toggleSidebar()">🔲 Плитка</button>
-    <button class="btn" id="sbViewList" onclick="switchView('list'); toggleSidebar()">☰ Список</button>
+    <span class="label">View</span>
+    <button class="btn active" id="sbViewGrid" onclick="switchView('grid'); toggleSidebar()"><svg><path class="icon-grid"/></svg> Grid</button>
+    <button class="btn" id="sbViewList" onclick="switchView('list'); toggleSidebar()"><svg><path class="icon-list"/></svg> List</button>
     
-    <div style="height: 1px; background: #ddd; margin: 10px 0;"></div>
+    <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
     
-    <button class="btn" id="sbHideEmpty" onclick="toggleHideEmpty()">👁️ Всі черги</button>
+    <span class="label">Filters</span>
+    <button class="btn" id="sbHideEmpty" onclick="toggleHideEmpty()"><svg id="iconSbHide"><path class="icon-eye"/></svg> <span id="textSbHide">All Queues</span></button>
     
-    <div style="height: 1px; background: #ddd; margin: 10px 0;"></div>
+    <div style="height: 1px; background: var(--border); margin: 4px 0;"></div>
     
-    <button class="btn" onclick="openSettings(); toggleSidebar()">⚙️ Налаштування</button>
+    <button class="btn" onclick="openSettings(); toggleSidebar()"><svg><path class="icon-settings"/></svg> Settings</button>
 </div>
 
 <div class="top-bar">
   <div class="top-bar-left">
-      <button class="hamburger" onclick="toggleSidebar()">☰</button>
-      <h1>📞 Активні черги</h1>
+      <button class="hamburger" onclick="toggleSidebar()"><svg><path class="icon-menu"/></svg></button>
+      <h1><svg><path class="icon-phone"/></svg> Active Queues</h1>
   </div>
   
   <div class="mobile-controls">
-      <button class="btn" id="mobileSortCycleBtn" onclick="cycleSort()" title="Сортування">↕️</button>
+      <button class="btn btn-icon" id="mobileSortCycleBtn" onclick="cycleSort()" title="Sort">
+          <svg id="mobSortSvg"><path class="icon-sort"/></svg>
+      </button>
   </div>
 
   <div class="desktop-controls">
-      <select class="btn" id="sortSelectDesk" onchange="changeSort(this.value)" style="margin-right: 10px;">
-          <option value="custom">↕️ Стандарт</option>
-          <option value="calls">🔥 За дзвінками</option>
-          <option value="wait">⏳ За часом</option>
+      <div class="zoom-wrapper" title="Scale Interface">
+          <svg style="color:var(--text-muted)"><path class="icon-zoom"/></svg>
+          <input type="range" id="zoomSlider" class="zoom-slider" min="0.7" max="1.3" step="0.05" value="1" oninput="changeZoom(this.value)">
+          <span id="zoomValue" class="mono" style="font-size:11px; width:36px; text-align:right;">100%</span>
+      </div>
+
+      <div style="width: 1px; height: 20px; background: var(--border); margin: 0 4px;"></div>
+
+      <select class="btn mono" id="sortSelectDesk" onchange="changeSort(this.value)">
+          <option value="custom">SORT: CUSTOM</option>
+          <option value="calls">SORT: CALLS</option>
+          <option value="wait">SORT: WAIT TIME</option>
       </select>
 
-      <button class="btn active" id="viewGridBtn" onclick="switchView('grid')" title="Grid View">🔲</button>
-      <button class="btn" id="viewListBtn" onclick="switchView('list')" title="List View">☰</button>
-      <button class="btn" id="hideEmptyBtn" onclick="toggleHideEmpty()" title="Hide Empty">👁️</button>
-      <button class="btn" id="dragBtn" onclick="toggleDragMode()" title="Drag & Drop">🔒</button>
-      <button class="btn" onclick="openSettings()" title="Settings">⚙️ Налаштування</button>
+      <div style="width: 1px; height: 20px; background: var(--border); margin: 0 4px;"></div>
+
+      <button class="btn btn-icon active" id="viewGridBtn" onclick="switchView('grid')" title="Grid View"><svg><path class="icon-grid"/></svg></button>
+      <button class="btn btn-icon" id="viewListBtn" onclick="switchView('list')" title="List View"><svg><path class="icon-list"/></svg></button>
+      <button class="btn btn-icon" id="hideEmptyBtn" onclick="toggleHideEmpty()" title="Toggle Empty"><svg id="iconDeskHide"><path class="icon-eye"/></svg></button>
+      <button class="btn btn-icon" id="dragBtn" onclick="toggleDragMode()" title="Drag & Drop"><svg id="iconDrag"><path class="icon-lock"/></svg></button>
+      
+      <div style="width: 1px; height: 20px; background: var(--border); margin: 0 4px;"></div>
+      
+      <button class="btn btn-icon" onclick="openSettings()" title="Settings"><svg><path class="icon-settings"/></svg></button>
   </div>
 </div>
 
-<div id="status">🔄 Підключення...</div>
+<div id="status"><svg style="width:14px;height:14px"><path class="icon-activity"/></svg> <span>Connecting...</span></div>
 
 <div class="grid" id="queuesGrid"></div>
 
@@ -268,7 +357,7 @@
         <th style="width: 15%">Max Wait</th>
         <th style="width: 10%">Waiting</th>
         <th style="width: 20%">Agents</th>
-        <th style="width: 25%">Daily Stats</th>
+        <th style="width: 25%">Daily Ans</th>
       </tr>
     </thead>
     <tbody id="listBody"></tbody>
@@ -276,77 +365,101 @@
 </div>
 
 <div class="mobile-fab-stats" id="mobileFabStats" onclick="toggleMobileStats()">
-    📊 Статистика <span id="fab-wait-count" style="background:rgba(255,255,255,0.3); padding:2px 6px; border-radius:10px; margin-left:8px; font-size:12px;">0</span>
+    <svg><path class="icon-activity"/></svg>
 </div>
 
 <div class="global-stats" id="statsBar">
-    <div class="stats-toggle-tab" onclick="toggleStatsBar()" id="statsToggleIcon">▼ Сховати</div>
+    <div class="stats-toggle-tab" onclick="toggleStatsBar()" id="statsToggleIcon">
+        <svg style="width:14px;height:14px"><path class="icon-chevron-down" id="statsChevron"/></svg> Global Stats
+    </div>
     
     <div class="g-stat-item">
         <span class="g-stat-label">Total Waiting</span>
         <span class="g-stat-value" id="gs-waiting">0</span>
     </div>
     
-    <div class="g-stat-item" style="flex-direction: column; align-items: center;">
-        <span class="g-stat-label">🔥 Top 3 Busy</span>
+    <div class="g-stat-item">
+        <span class="g-stat-label">Top Busy</span>
         <div id="gs-top3" class="top-list">
-            <div style="opacity:0.5; margin-top:5px;">— No Calls —</div>
+            <div style="opacity:0.5; font-size:11px;">NO CALLS</div>
         </div>
     </div>
 
     <div class="g-stat-item">
-        <span class="g-stat-label">Max Wait</span>
-        <span class="g-stat-value" id="gs-max-hold">00:00</span>
+        <span class="g-stat-label">Max Hold</span>
+        <span class="g-stat-value t-green" id="gs-max-hold">00:00</span>
     </div>
     
     <div class="g-stat-item">
-        <span class="g-stat-label">Daily Ans</span>
+        <span class="g-stat-label">Daily Answered</span>
         <div class="stat-container">
-            <div class="g-stat-value" id="gs-today-ans" style="color: #2ecc71;">0</div>
+            <div class="g-stat-value" id="gs-today-ans" style="color: #34d399;">0</div>
             <div class="stat-tooltip" id="tip-g-ans">Loading...</div>
         </div>
     </div>
     
-    <button class="btn hamburger" style="width:100%; margin-top:10px; background: rgba(255,255,255,0.1); color:white; border:none;" onclick="toggleMobileStats()">Закрити</button>
+    <button class="btn hamburger" style="width:100%; margin-top:10px; background: rgba(255,255,255,0.05); color:var(--text-muted); border:1px solid rgba(255,255,255,0.1);" onclick="toggleMobileStats()">Close</button>
 </div>
 
 <div class="modal" id="settingsModal">
   <div class="modal-content">
-    <h2>Налаштування</h2>
-    <form id="settingsForm"></form>
+    <h2>Settings</h2>
+    <form id="settingsForm">
+        <div class="settings-group">
+            <strong>Theme</strong>
+            <select name="theme" class="btn" style="width:100%; justify-content:space-between">
+                <option value="light">Light (Slate)</option>
+                <option value="dark">Dark (Graphite)</option>
+            </select>
+        </div>
+        
+        <div class="settings-group">
+            <strong>Add Custom Queue</strong>
+            <div class="add-queue-form">
+                <input type="text" id="newQId" placeholder="ID (e.g. Q123)" style="flex:1">
+                <input type="text" id="newQName" placeholder="Name" style="flex:2">
+                <button type="button" class="btn" onclick="handleAddClick()">Add</button>
+            </div>
+        </div>
+
+        <div class="settings-group">
+            <strong>Visible Queues</strong>
+            <div class="checkbox-list" id="qList"></div>
+        </div>
+    </form>
     <div class="modal-buttons">
-      <button type="button" class="btn" onclick="closeSettings()">Закрити</button>
-      <button type="button" class="btn primary" onclick="saveSettings()">Зберегти</button>
+      <button type="button" class="btn" onclick="closeSettings()">Cancel</button>
+      <button type="button" class="btn primary" onclick="saveSettings()">Save Changes</button>
     </div>
   </div>
 </div>
 
 <div class="cheatsheet">
-  <div>
-    <h3>📌 Prefixes | Call numbers</h3>
+  <div class="cs-box">
+    <h3>Support</h3>
     <ul>
-      <li>TrackEnsure Support: <strong>04</strong> +1(916)860-1234</li>
-      <li>Alfa Support: <strong>06</strong> +1(469)445-27-57</li>
-      <li>Vista Support: <strong>09</strong> +1(614)362-22-23 </li>
-      <li>Swift Support: <strong>08</strong> +1(678)387-51-75</li>
-      <li>Sharp Support: <strong>03</strong> +1(862)208-38-48</li>
-      <li>Club Support: <strong>02</strong> +1(615)900-55-51 </li>
-      <li>Pro-TracKing Support: <strong>11</strong> +1(623)887-44-22</li>
-      <li>Smart eLog Support: <strong>13</strong> +1(916)740-66-74</li>
-      <li>KGZ: <strong>12</strong> +1(217)401-12-22</li>
+      <li><span>TrackEnsure</span> <span class="mono">04 | +1(916)860-1234</span></li>
+      <li><span>Alfa</span> <span class="mono">06 | +1(469)445-27-57</span></li>
+      <li><span>Vista</span> <span class="mono">09 | +1(614)362-22-23</span></li>
+      <li><span>Swift</span> <span class="mono">08 | +1(678)387-51-75</span></li>
+      <li><span>Sharp</span> <span class="mono">03 | +1(862)208-38-48</span></li>
+      <li><span>Club</span> <span class="mono">02 | +1(615)900-55-51</span></li>
+      <li><span>Pro-TracKing</span> <span class="mono">11 | +1(623)887-44-22</span></li>
+      <li><span>Smart eLog</span> <span class="mono">13 | +1(916)740-66-74</span></li>
+      <li><span>KGZ</span> <span class="mono">12 | +1(217)401-12-22</span></li>
     </ul>
   </div>
-  <div>
-    <h3>💼 Sales</h3>
+  <div class="cs-box">
+    <h3>Sales</h3>
     <ul>
-      <li>TrackEnsure Sales: <strong>704</strong></li>
-      <li>Alfa Sales: <strong>725</strong></li>
-      <li>Vista Sales: <strong>726</strong></li>
-      <li>Swift Sales: <strong>728</strong></li>
-      <li>Sharp Sales: <strong>755</strong></li>
-      <li>Club Sales: <strong>746</strong></li>
-      <li>Pro-TracKing Sales: <strong>782</strong></li>
-      <li>Smart eLog Sales: <strong>812</strong></li>
+      <li><span>TrackEnsure Sales</span> <span class="mono">704</span></li>
+      <li><span>Alfa Sales</span> <span class="mono">725</span></li>
+      <li><span>Vista Sales</span> <span class="mono">726</span></li>
+      <li><span>Swift Sales</span> <span class="mono">728</span></li>
+      <li><span>Sharp Sales</span> <span class="mono">755</span></li>
+      <li><span>Club Sales</span> <span class="mono">746</span></li>
+      <li><span>Pro-TracKing Sales</span> <span class="mono">782</span></li>
+      <li><span>Smart eLog Sales</span> <span class="mono">812</span></li>
     </ul>
   </div>
 </div>
@@ -387,10 +500,25 @@
   function saveVisibleQueues(list) { localStorage.setItem('visibleQueues', JSON.stringify(list)); }
   function formatTime(seconds) { const m = String(Math.floor(seconds / 60)).padStart(2, '0'); const s = String(seconds % 60).padStart(2, '0'); return `${m}:${s}`; }
   function getQStats(qid) { return (fullStats.daily && fullStats.daily.queues && fullStats.daily.queues[qid]) ? fullStats.daily.queues[qid] : { ans: 0 }; }
-  function detectLanguage(name) { if (!name) return "?"; const u = name.toUpperCase(); if (u.includes("UKR")) return "ukr"; if (u.includes("RU")) return "ru"; if (u.includes("EN")) return "en"; return "?"; }
+  function detectLanguage(name) { if (!name) return "?"; const u = name.toUpperCase(); if (u.includes("UKR")) return "UKR"; if (u.includes("RU")) return "RU"; if (u.includes("EN")) return "EN"; return "UNK"; }
   function detectName(raw) { if (!raw) return ""; const idx = raw.lastIndexOf(":"); return idx === -1 ? raw : raw.slice(idx + 1).trim(); }
 
-  // --- MOBILE & UI FUNCTIONS ---
+  // --- ZOOM CONTROL ---
+  function applyZoom() {
+      const z = localStorage.getItem('appZoom') || '1';
+      document.body.style.zoom = z;
+      const slider = document.getElementById('zoomSlider');
+      if(slider) slider.value = z;
+      const val = document.getElementById('zoomValue');
+      if(val) val.textContent = Math.round(z * 100) + '%';
+  }
+  
+  function changeZoom(val) {
+      localStorage.setItem('appZoom', val);
+      applyZoom();
+  }
+
+  // --- UI FUNCTIONS ---
   function toggleSidebar() {
       document.getElementById('appSidebar').classList.toggle('open');
       document.getElementById('sidebarOverlay').classList.toggle('open');
@@ -410,13 +538,21 @@
   }
   
   function updateHideEmptyUI() {
-      const btnDesk = document.getElementById('hideEmptyBtn'); const btnMob = document.getElementById('sbHideEmpty');
+      const btnDesk = document.getElementById('hideEmptyBtn'); 
+      const iconDesk = document.getElementById('iconDeskHide');
+      const btnMob = document.getElementById('sbHideEmpty');
+      const iconMob = document.getElementById('iconSbHide');
+      const textMob = document.getElementById('textSbHide');
+      
+      const svgEye = '<path class="icon-eye"/>';
+      const svgEyeOff = '<path class="icon-eye-off"/>';
+
       if (hideEmpty) {
-          if(btnDesk) { btnDesk.classList.add('active'); btnDesk.innerHTML = '🙈'; }
-          if(btnMob) { btnMob.classList.add('active'); btnMob.innerHTML = '🙈 Сховані порожні'; }
+          if(btnDesk) { btnDesk.classList.add('active'); iconDesk.innerHTML = svgEyeOff; }
+          if(btnMob) { btnMob.classList.add('active'); iconMob.innerHTML = svgEyeOff; textMob.textContent = 'Hidden Empty'; }
       } else {
-          if(btnDesk) { btnDesk.classList.remove('active'); btnDesk.innerHTML = '👁️'; }
-          if(btnMob) { btnMob.classList.remove('active'); btnMob.innerHTML = '👁️ Всі черги'; }
+          if(btnDesk) { btnDesk.classList.remove('active'); iconDesk.innerHTML = svgEye; }
+          if(btnMob) { btnMob.classList.remove('active'); iconMob.innerHTML = svgEye; textMob.textContent = 'All Queues'; }
       }
   }
 
@@ -437,11 +573,11 @@
       const deskSelect = document.getElementById('sortSelectDesk');
       if(deskSelect) deskSelect.value = val;
       
-      const cycleBtn = document.getElementById('mobileSortCycleBtn');
-      if(cycleBtn) {
-          if(val === 'custom') cycleBtn.textContent = '↕️';
-          if(val === 'calls') cycleBtn.textContent = '🔥';
-          if(val === 'wait') cycleBtn.textContent = '⏳';
+      const mobSvg = document.getElementById('mobSortSvg');
+      if(mobSvg) {
+          if(val === 'custom') mobSvg.innerHTML = '<path class="icon-sort"/>';
+          if(val === 'calls') mobSvg.innerHTML = '<path class="icon-users"/>';
+          if(val === 'wait') mobSvg.innerHTML = '<path class="icon-clock"/>';
       }
 
       const dragBtn = document.getElementById('dragBtn');
@@ -510,7 +646,7 @@
   function getTooltipHTML(type, qid) {
       const source = qid ? (fullStats.queuesPeriods[qid] || {}) : fullStats.globalPeriods;
       const h1 = source.h1 || { ans: 0 }; const h2 = source.h2 || { ans: 0 }; const h4 = source.h4 || { ans: 0 };
-      return `1h: <b>${h1.ans}</b><br>2h: <b>${h2.ans}</b><br>4h: <b>${h4.ans}</b>`;
+      return `<div class="mono" style="display:grid; grid-template-columns:1fr auto; gap:8px;"><span>1H:</span><span>${h1.ans}</span><span>2H:</span><span>${h2.ans}</span><span>4H:</span><span>${h4.ans}</span></div>`;
   }
   
   function updateStatLabels(prefix, qid) {
@@ -533,10 +669,10 @@
       });
 
       document.getElementById('gs-waiting').textContent = totalWaiting;
-      document.getElementById('fab-wait-count').textContent = totalWaiting; 
       
-      const mhEl = document.getElementById('gs-max-hold'); mhEl.textContent = formatTime(maxHold);
-      if(maxHold >= 600) mhEl.classList.add('alert'); else mhEl.classList.remove('alert');
+      const mhEl = document.getElementById('gs-max-hold'); 
+      mhEl.textContent = formatTime(maxHold);
+      mhEl.className = 'g-stat-value mono ' + getHoldColorClass(maxHold);
 
       let totalAns = 0;
       if (fullStats.daily && fullStats.daily.queues) Object.values(fullStats.daily.queues).forEach(s => totalAns += s.ans); 
@@ -544,10 +680,10 @@
       document.getElementById('tip-g-ans').innerHTML = getTooltipHTML('ans', null);
 
       const top3Container = document.getElementById('gs-top3');
-      if (busyList.length === 0) top3Container.innerHTML = '<div style="opacity:0.5; margin-top:5px;">— No Calls —</div>';
+      if (busyList.length === 0) top3Container.innerHTML = '<div style="opacity:0.5; font-size:11px;">NO CALLS</div>';
       else {
           busyList.sort((a, b) => b.count - a.count);
-          top3Container.innerHTML = busyList.slice(0, 3).map(item => `<div style="margin-bottom:2px; display:flex; justify-content:space-between; width:100%"><span style="color:#ff6b6b;font-weight:bold;margin-right:8px">${item.count}</span><span style="font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</span></div>`).join('');
+          top3Container.innerHTML = busyList.slice(0, 3).map(item => `<div style="display:flex; justify-content:space-between; width:100%"><span style="color:var(--status-warn); margin-right:8px">${item.count}</span><span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${item.name}</span></div>`).join('');
       }
   }
 
@@ -569,7 +705,7 @@
           dragBtn.style.display = 'none'; isDragEnabled = false; updateDragUI();
       }
       
-      renderAll(); // ВЕРНУЛ ЭТУ СТРОКУ, ТЕПЕРЬ ВСЕ РАБОТАЕТ!
+      renderAll(); 
   }
 
   function renderAll() {
@@ -591,10 +727,10 @@
 
   function updateBlockColor(element, count) {
       const n = Number(count);
-      element.classList.remove('status-green', 'status-orange', 'status-red');
-      if (n > 10) element.classList.add('status-red');
-      else if (n >= 6) element.classList.add('status-orange');
-      else if (n >= 1) element.classList.add('status-green'); 
+      element.classList.remove('s-green', 's-orange', 's-red');
+      if (n > 10) element.classList.add('s-red');
+      else if (n >= 6) element.classList.add('s-orange');
+      else if (n >= 1) element.classList.add('s-green'); 
   }
 
   function createCard(qid, name, data) {
@@ -610,26 +746,33 @@
       card.innerHTML = `
         <div class="queue-header">
             <div>
-                <div class="queue-name">${name}</div>
-                <div class="queue-id">${qid} <span class="mobile-wait ${holdClass}" id="mob-hold-${qid}">⏱ ${formatTime(data.hold)}</span></div>
+                <div class="queue-name-wrap"><span class="queue-name">${name}</span> <span class="status-dot"></span></div>
+                <div class="queue-id">${qid} <span class="mobile-wait mono ${holdClass}" id="mob-hold-${qid}"><svg style="width:10px;height:10px"><path class="icon-clock"/></svg> ${formatTime(data.hold)}</span></div>
             </div>
-            <div class="queue-count" id="count-${qid}">${data.queued_calls}</div>
+            <div class="queue-count mono" id="count-${qid}">${data.queued_calls}</div>
         </div>
         
-        <div class="card-indicator">▼ Натисніть, щоб розгорнути ▼</div>
+        <div class="card-indicator">Tap to expand</div>
         
         <div class="collapsible-content">
             <div class="callers-list" id="callers-${qid}"></div>
-            <div class="local-stats-block">
-                <div class="stat-container">
-                    <span>Ans: <b id="ls-ans-${qid}">0</b></span>
-                    <div class="stat-tooltip" id="ls-tip-ans-${qid}">...</div>
+            
+            <div class="card-stats-grid">
+                <div class="stat-box">
+                    <span class="label">Max Wait</span>
+                    <span class="val mono ${holdClass}" id="hold-${qid}">${formatTime(data.hold)}</span>
                 </div>
-            </div>
-            <div class="queue-info-block" style="margin-top:5px; font-size:13px;">
-              👥 Logged: <span id="logged-${qid}">${data.logged_in}</span> | 
-              ✅ Avalible: <span id="avail-${qid}">${data.available}</span><br>
-              ⏳ Max Wait: <span id="hold-${qid}" class="${holdClass}">${formatTime(data.hold)}</span>
+                <div class="stat-box">
+                    <span class="label">Agents</span>
+                    <span class="val mono"><span id="logged-${qid}">${data.logged_in}</span> / <span id="avail-${qid}">${data.available}</span></span>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-container" style="display:inline-block">
+                        <span class="label">Ans</span>
+                        <span class="val mono" id="ls-ans-${qid}">0</span>
+                        <div class="stat-tooltip" id="ls-tip-ans-${qid}">...</div>
+                    </div>
+                </div>
             </div>
         </div>
       `;
@@ -641,36 +784,48 @@
   function createListRow(qid, name, data) {
       const tr = document.createElement('tr'); tr.className = 'queue-row'; tr.id = `row-${qid}`; tr.onclick = () => { tr.classList.toggle('expanded'); document.getElementById(`detail-${qid}`).classList.toggle('open'); applySorting(); };
       const holdClass = getHoldColorClass(data.hold);
-      tr.innerHTML = `<td><span class="toggle-icon">▶</span> <strong>${name}</strong> <span style="font-size:11px;color:#888;">${qid}</span></td><td><span id="l-hold-${qid}" class="${holdClass}" style="font-weight:bold;">${formatTime(data.hold)}</span></td><td><span class="badge" id="l-badge-${qid}">${data.queued_calls}</span></td><td><span id="l-logged-${qid}">${data.logged_in}</span> / <span id="l-avail-${qid}">${data.available}</span></td><td style="font-size:13px; color:#555;"><div class="stat-container">Ans: <span id="l-ans-${qid}" style="color:#27ae60; font-weight:bold;">0</span><div class="stat-tooltip" id="l-tip-ans-${qid}">...</div></div></td>`;
+      tr.innerHTML = `
+        <td><div style="display:flex; align-items:center; gap:8px"><svg style="color:var(--text-muted)"><path class="icon-chevron-down"/></svg> <strong>${name}</strong> <span class="mono" style="font-size:10px;color:var(--text-muted);">${qid}</span></div></td>
+        <td><span id="l-hold-${qid}" class="mono ${holdClass}">${formatTime(data.hold)}</span></td>
+        <td><span class="badge-count mono" id="l-badge-${qid}">${data.queued_calls}</span></td>
+        <td class="mono"><span id="l-logged-${qid}">${data.logged_in}</span> / <span id="l-avail-${qid}">${data.available}</span></td>
+        <td><div class="stat-container"><span class="mono" id="l-ans-${qid}" style="color:var(--status-ok);">0</span><div class="stat-tooltip" id="l-tip-ans-${qid}">...</div></div></td>
+      `;
       const detailTr = document.createElement('tr'); detailTr.className = 'detail-row'; detailTr.id = `detail-${qid}`;
-      detailTr.innerHTML = `<td colspan="5" style="padding:0;"><div class="detail-content"><div class="callers-list" id="l-callers-${qid}"></div></div></td>`;
+      detailTr.innerHTML = `<td colspan="5" style="padding:0;"><div class="detail-content"><div class="callers-list" id="l-callers-${qid}" style="height:auto; max-height:200px;"></div></div></td>`;
       setTimeout(() => updateStatLabels('l-', qid), 0); updateBlockColor(tr, data.queued_calls);
       return { mainRow: tr, detailRow: detailTr };
   }
 
   function toggleDragMode() { isDragEnabled = !isDragEnabled; updateDragUI(); }
-  function updateDragUI() { const dragBtn = document.getElementById('dragBtn'); dragBtn.textContent = isDragEnabled ? "✋" : "🔒"; dragBtn.classList.toggle("active", isDragEnabled); document.querySelectorAll('.card').forEach(c => c.setAttribute('draggable', isDragEnabled)); }
+  function updateDragUI() { 
+      const dragBtn = document.getElementById('dragBtn'); 
+      const iconDrag = document.getElementById('iconDrag');
+      dragBtn.classList.toggle("active", isDragEnabled); 
+      iconDrag.innerHTML = isDragEnabled ? '<path class="icon-unlock"/>' : '<path class="icon-lock"/>';
+      document.querySelectorAll('.card').forEach(c => c.setAttribute('draggable', isDragEnabled)); 
+  }
   
   function toggleStatsBar() { 
       const bar = document.getElementById('statsBar'); 
-      const btn = document.getElementById('statsToggleIcon'); 
+      const chevron = document.getElementById('statsChevron'); 
       bar.classList.toggle('minimized'); 
       if (bar.classList.contains('minimized')) { 
-          btn.textContent = '▲ Статистика'; 
+          chevron.setAttribute('class', 'icon-chevron-up');
           localStorage.setItem('statsBarMinimized', 'true'); 
       } else { 
-          btn.textContent = '▼ Сховати'; 
+          chevron.setAttribute('class', 'icon-chevron-down');
           localStorage.setItem('statsBarMinimized', 'false'); 
       }
   }
   
   if (localStorage.getItem('statsBarMinimized') === 'true' && window.innerWidth > 768) { 
       document.getElementById('statsBar').classList.add('minimized'); 
-      document.getElementById('statsToggleIcon').textContent = '▲ Статистика'; 
+      document.getElementById('statsChevron').setAttribute('class', 'icon-chevron-up'); 
   }
   
   function getHoldColorClass(seconds) { if (seconds >= 600) return 't-red'; if (seconds >= 300) return 't-orange'; return 't-green'; }
-  function copyText(text, btnElement) { if (!text) return; navigator.clipboard.writeText(text).then(() => { const original = btnElement.textContent; btnElement.textContent = "✅"; setTimeout(() => btnElement.textContent = original, 1500); }); }
+  function copyText(text, btnElement) { if (!text) return; navigator.clipboard.writeText(text).then(() => { const original = btnElement.innerHTML; btnElement.innerHTML = '<svg style="color:var(--status-ok)"><path d="M5 13l4 4L19 7"/></svg>'; setTimeout(() => btnElement.innerHTML = original, 1500); }); }
 
   function updateQueueData(qid, raw) {
       queuesData[qid] = { queued_calls: Number(raw.queued_calls), logged_in: raw.logged_in_members, available: raw.available_members, hold: Number(raw.longest_hold_time || 0) };
@@ -704,9 +859,9 @@
       if (timers[qid]) clearInterval(timers[qid]); let hold = startSeconds;
       const render = (val) => {
           const fmt = formatTime(val); const colorClass = getHoldColorClass(val);
-          const gh = document.getElementById(`hold-${qid}`); if(gh) { gh.textContent=fmt; gh.className=colorClass; }
-          const mh = document.getElementById(`mob-hold-${qid}`); if(mh) { mh.textContent='⏱ ' + fmt; mh.className='mobile-wait ' + colorClass; }
-          const lh = document.getElementById(`l-hold-${qid}`); if(lh) { lh.textContent=fmt; lh.className=colorClass; }
+          const gh = document.getElementById(`hold-${qid}`); if(gh) { gh.textContent=fmt; gh.className=`val mono ${colorClass}`; }
+          const mh = document.getElementById(`mob-hold-${qid}`); if(mh) { mh.innerHTML=`<svg style="width:10px;height:10px"><path class="icon-clock"/></svg> ${fmt}`; mh.className=`mobile-wait mono ${colorClass}`; }
+          const lh = document.getElementById(`l-hold-${qid}`); if(lh) { lh.textContent=fmt; lh.className=`mono ${colorClass}`; }
       };
       render(hold);
       if (count > 0) timers[qid] = setInterval(() => { 
@@ -718,41 +873,49 @@
   function updateCallersList(qid) {
       const callers = queueCallers[qid] || [];
       const generateHTML = (list) => {
-          if (!list.length) return '<div style="color:#999;font-style:italic;font-size:13px;padding:5px 0;">Немає абонентів</div>';
+          if (!list.length) return '<div style="display:flex; height:100%; align-items:center; justify-content:center; color:var(--text-muted); font-size:12px; font-style:italic;">No active callers</div>';
           return list.map((c, i) => {
-              const copyBtn = c.number ? `<span class="action-btn copy-btn" onclick="event.stopPropagation(); copyText('${c.number}', this)">📋</span>` : '';
+              const copyBtn = c.number ? `<button class="action-btn copy-btn" onclick="event.stopPropagation(); copyText('${c.number}', this)" title="Copy"><svg><path class="icon-copy"/></svg></button>` : '';
               let timerHTML = '';
               if (c.joinTime) {
                   const now = Date.now(); const durationSec = Math.floor((now - c.joinTime) / 1000);
-                  let tClass = 't-green'; if (durationSec >= 600) tClass = 't-red'; else if (durationSec >= 300) tClass = 't-orange';
+                  const colorClass = getHoldColorClass(durationSec);
                   const min = Math.floor(durationSec / 60).toString().padStart(2, '0');
                   const sec = (durationSec % 60).toString().padStart(2, '0');
-                  timerHTML = `<span class="timer-badge ${tClass}">${min}:${sec}</span>`;
+                  timerHTML = `<span class="mono ${colorClass}" style="margin-left:auto; margin-right:8px; font-size:11px;">${min}:${sec}</span>`;
               }
-              return `<div class="caller-row"><span class="caller-index">${i + 1}.</span><span class="caller-info">🌐 ${c.lang.toUpperCase()} — ${c.name} ${timerHTML}</span>${copyBtn}</div>`;
+              return `<div class="caller-row"><span class="caller-index">${i + 1}.</span><div class="caller-info"><span class="caller-name"><span class="caller-lang mono">${c.lang}</span> ${c.name}</span> ${timerHTML} ${copyBtn}</div></div>`;
           }).join('');
       };
-      const gl = document.getElementById(`callers-${qid}`); if(gl) gl.innerHTML = generateHTML(callers.slice(0, 5));
-      const ll = document.getElementById(`l-callers-${qid}`); if(ll) ll.innerHTML = generateHTML(callers);
+      
+      const gl = document.getElementById(`callers-${qid}`); 
+      if(gl) {
+          const scrollPos = gl.scrollTop; // Сохраняем позицию скролла
+          gl.innerHTML = generateHTML(callers); // Отображаем ВСЕХ звонящих без обрезки
+          gl.scrollTop = scrollPos; // Возвращаем позицию скролла на место
+      }
+      
+      const ll = document.getElementById(`l-callers-${qid}`); 
+      if(ll) ll.innerHTML = generateHTML(callers);
   }
 
   function handleDragStart(e) { if (!isDragEnabled) { e.preventDefault(); return false; } dragSrcEl = this; e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/html', this.innerHTML); this.classList.add('dragging'); }
   function handleDragOver(e) { if (isDragEnabled) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; } return false; }
-  function handleDragEnter(e) { if(isDragEnabled) this.classList.add('over'); }
-  function handleDragLeave(e) { this.classList.remove('over'); }
-  function handleDrop(e) { if (!isDragEnabled) return; if (e.stopPropagation) e.stopPropagation(); this.classList.remove('over');
+  function handleDragEnter(e) { if(isDragEnabled) this.style.borderColor = "var(--accent)"; }
+  function handleDragLeave(e) { this.style.borderColor = "var(--border)"; }
+  function handleDrop(e) { if (!isDragEnabled) return; if (e.stopPropagation) e.stopPropagation(); this.style.borderColor = "var(--border)";
       if (dragSrcEl !== this) {
           const srcId = dragSrcEl.id.replace('card-', ''); const targetId = this.id.replace('card-', '');
           const list = loadVisibleQueues(); const from = list.indexOf(srcId); const to = list.indexOf(targetId);
           if (from > -1 && to > -1) { list.splice(from, 1); list.splice(to, 0, srcId); saveVisibleQueues(list); renderAll(); }
       } return false; }
-  function handleDragEnd(e) { this.classList.remove('dragging'); this.classList.remove('over'); document.querySelectorAll('.card').forEach(c => { c.classList.remove('over'); c.classList.remove('dragging'); }); }
+  function handleDragEnd(e) { this.classList.remove('dragging'); document.querySelectorAll('.card').forEach(c => c.style.borderColor = "var(--border)"); }
   let dragSrcEl = null;
 
   function connectWebSocket() {
-    statusEl.textContent = "🔄 Підключення...";
+    statusEl.innerHTML = `<svg style="width:14px;height:14px"><path class="icon-activity"/></svg> <span>Connecting...</span>`;
     const socket = new WebSocket("wss://trackensure.gitstel.net/sw-monitor/?EIO=3&transport=websocket");
-    socket.onopen = () => { statusEl.textContent = "✅ З'єднання встановлено"; };
+    socket.onopen = () => { statusEl.innerHTML = `<span style="color:var(--status-ok); display:flex; align-items:center; gap:6px;"><span class="status-dot" style="background:var(--status-ok); box-shadow:0 0 6px var(--status-ok)"></span> Connected</span>`; };
     socket.onmessage = (event) => {
       const data = event.data;
       if (data.startsWith('42')) {
@@ -790,28 +953,27 @@
         } catch (err) {}
       }
     };
-    socket.onclose = () => { statusEl.textContent = "🔌 З'єднання втрачено..."; setTimeout(connectWebSocket, 5000); };
+    socket.onclose = () => { statusEl.innerHTML = `<span style="color:var(--status-err); display:flex; align-items:center; gap:6px;"><svg style="width:14px;height:14px"><path class="icon-x"/></svg> Disconnected...</span>`; setTimeout(connectWebSocket, 5000); };
   }
 
   function openSettings() {
-    settingsForm.innerHTML = `
-      <div class="settings-group"><strong>Додати чергу:</strong><div class="add-queue-form"><input type="text" id="newQId" placeholder="ID (Q...)"><input type="text" id="newQName" placeholder="Name"><button type="button" class="btn primary" onclick="handleAddClick()">Додати</button></div></div>
-      <div class="settings-group"><strong>Видимі черги:</strong><div id="qList"></div></div>
-      <div class="settings-group"><strong>Тема:</strong> <label><input type="radio" name="theme" value="light" ${getTheme()==='light'?'checked':''}> Світла</label> <label><input type="radio" name="theme" value="dark" ${getTheme()==='dark'?'checked':''}> Темна</label></div>
-    `;
-    const qList = document.getElementById('qList'); const visible = loadVisibleQueues(); const custom = getCustomQueues();
+    const qList = document.getElementById('qList'); qList.innerHTML = '';
+    const visible = loadVisibleQueues(); const custom = getCustomQueues();
+    document.querySelector('select[name="theme"]').value = getTheme();
+    
     Object.entries(getAllQueues()).forEach(([qid, name]) => {
-      const isCustom = custom.hasOwnProperty(qid); const delBtn = isCustom ? `<button class="delete-q-btn" onclick="event.preventDefault(); removeCustomQueue('${qid}')">🗑️</button>` : '';
-      const div = document.createElement('div'); div.innerHTML = `<label><span><input type="checkbox" name="queues" value="${qid}" ${visible.includes(qid) ? 'checked' : ''}> ${qid} - ${name} ${isCustom?'(Custom)':''}</span>${delBtn}</label>`;
+      const isCustom = custom.hasOwnProperty(qid); const delBtn = isCustom ? `<button class="del-btn" onclick="event.preventDefault(); removeCustomQueue('${qid}')"><svg><path class="icon-x"/></svg></button>` : '';
+      const div = document.createElement('div'); 
+      div.innerHTML = `<label><div style="display:flex; align-items:center; gap:8px;"><input type="checkbox" name="queues" value="${qid}" ${visible.includes(qid) ? 'checked' : ''}> <span class="mono" style="font-size:11px; color:var(--text-muted)">${qid}</span> ${name} ${isCustom?'<span class="label" style="display:inline">CUSTOM</span>':''}</div>${delBtn}</label>`;
       qList.appendChild(div);
     });
-    settingsModal.style.display = 'flex';
+    document.getElementById('settingsModal').style.display = 'flex';
   }
   function handleAddClick() { const id = document.getElementById('newQId').value; const name = document.getElementById('newQName').value; if(id && name) { const c = getCustomQueues(); c[id]=name; localStorage.setItem('customQueues', JSON.stringify(c)); openSettings(); }}
   function removeCustomQueue(id) { const c = getCustomQueues(); delete c[id]; localStorage.setItem('customQueues', JSON.stringify(c)); openSettings(); }
-  function closeSettings() { settingsModal.style.display = 'none'; }
+  function closeSettings() { document.getElementById('settingsModal').style.display = 'none'; }
   function saveSettings() {
-      const fd = new FormData(settingsForm); const checkboxes = document.querySelectorAll('input[name="queues"]:checked');
+      const fd = new FormData(document.getElementById('settingsForm')); const checkboxes = document.querySelectorAll('input[name="queues"]:checked');
       const sel = Array.from(checkboxes).map(cb => cb.value);
       let order = Object.keys(getAllQueues()).filter(id => sel.includes(id));
       saveVisibleQueues(order); localStorage.setItem('theme', fd.get('theme')); document.body.className = fd.get('theme');
@@ -824,13 +986,14 @@
   }, 1000);
 
   // Initialize
+  applyZoom(); // Запускаем сохраненный зум при загрузке
   document.body.className = getTheme();
   document.getElementById('sortSelectDesk').value = currentSort;
   const cycleBtn = document.getElementById('mobileSortCycleBtn');
   if(cycleBtn) {
-      if(currentSort === 'custom') cycleBtn.textContent = '↕️';
-      if(currentSort === 'calls') cycleBtn.textContent = '🔥';
-      if(currentSort === 'wait') cycleBtn.textContent = '⏳';
+      if(currentSort === 'custom') cycleBtn.innerHTML = '<svg><path class="icon-sort"/></svg>';
+      if(currentSort === 'calls') cycleBtn.innerHTML = '<svg><path class="icon-users"/></svg>';
+      if(currentSort === 'wait') cycleBtn.innerHTML = '<svg><path class="icon-clock"/></svg>';
   }
   updateHideEmptyUI();
   switchView(currentView);
