@@ -172,11 +172,6 @@
     .action-btn:hover { background: var(--border); color: var(--text-main); }
     .action-btn svg { width: 14px; height: 14px; }
 
-    /* TOOLTIPS */
-    .stat-container { position: relative; display: inline-block; cursor: help; border-bottom: 1px dotted var(--text-muted); }
-    .stat-tooltip { visibility: hidden; width: 110px; background-color: var(--bg-panel); color: #fff; text-align: left; border-radius: 4px; padding: 8px; position: absolute; z-index: 9999; bottom: 125%; left: 50%; transform: translateX(-50%); opacity: 0; transition: 0.2s; font-size: 11px; pointer-events: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-    .stat-container:hover .stat-tooltip { visibility: visible; opacity: 1; }
-
     /* GLOBAL BAR (BOTTOM) */
     .global-stats { position: fixed; bottom: 0; left: 0; right: 0; background: var(--bg-panel); color: #e2e8f0; z-index: 2000; display: flex; justify-content: center; align-items: center; padding: 12px 0; gap: 40px; min-height: 60px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-top: 1px solid rgba(255,255,255,0.1); }
     .global-stats.minimized { transform: translateY(100%); }
@@ -353,11 +348,10 @@
   <table>
     <thead>
       <tr>
-        <th style="width: 30%">Queue Name</th>
-        <th style="width: 15%">Max Wait</th>
-        <th style="width: 10%">Waiting</th>
-        <th style="width: 20%">Agents</th>
-        <th style="width: 25%">Daily Ans</th>
+        <th style="width: 35%">Queue Name</th>
+        <th style="width: 25%">Max Wait</th>
+        <th style="width: 15%">Waiting</th>
+        <th style="width: 25%">Agents</th>
       </tr>
     </thead>
     <tbody id="listBody"></tbody>
@@ -388,14 +382,6 @@
     <div class="g-stat-item">
         <span class="g-stat-label">Max Hold</span>
         <span class="g-stat-value t-green" id="gs-max-hold">00:00</span>
-    </div>
-    
-    <div class="g-stat-item">
-        <span class="g-stat-label">Daily Answered</span>
-        <div class="stat-container">
-            <div class="g-stat-value" id="gs-today-ans" style="color: #34d399;">0</div>
-            <div class="stat-tooltip" id="tip-g-ans">Loading...</div>
-        </div>
     </div>
     
     <button class="btn hamburger" style="width:100%; margin-top:10px; background: rgba(255,255,255,0.05); color:var(--text-muted); border:1px solid rgba(255,255,255,0.1);" onclick="toggleMobileStats()">Close</button>
@@ -465,7 +451,7 @@
 </div>
 
 <script>
-  const API_URL = "https://queue-server-fbi5.onrender.com/stats"; 
+  // Сервер Render больше не используется. Все данные поступают только по WebSockets.
 
   const defaultQueueNames = {
     Q700: "TrackEnsure Support", Q701: "TrackEnsure Support rus/ukr", Q801: "Callback rus/ukr", Q800: "Callback",
@@ -484,7 +470,6 @@
   const queueCallers = {}; 
   const queuesData = {};   
   const timers = {};        
-  let fullStats = { daily: { queues: {} }, queuesPeriods: {}, globalPeriods: { h1:{}, h2:{}, h4:{} } };
 
   const statusEl = document.getElementById('status');
   const gridEl = document.getElementById('queuesGrid');
@@ -499,7 +484,6 @@
   function loadVisibleQueues() { return JSON.parse(localStorage.getItem('visibleQueues') || JSON.stringify(Object.keys(getAllQueues()))); }
   function saveVisibleQueues(list) { localStorage.setItem('visibleQueues', JSON.stringify(list)); }
   function formatTime(seconds) { const m = String(Math.floor(seconds / 60)).padStart(2, '0'); const s = String(seconds % 60).padStart(2, '0'); return `${m}:${s}`; }
-  function getQStats(qid) { return (fullStats.daily && fullStats.daily.queues && fullStats.daily.queues[qid]) ? fullStats.daily.queues[qid] : { ans: 0 }; }
   function detectLanguage(name) { if (!name) return "?"; const u = name.toUpperCase(); if (u.includes("UKR")) return "UKR"; if (u.includes("RU")) return "RU"; if (u.includes("EN")) return "EN"; return "UNK"; }
   function detectName(raw) { if (!raw) return ""; const idx = raw.lastIndexOf(":"); return idx === -1 ? raw : raw.slice(idx + 1).trim(); }
 
@@ -631,31 +615,6 @@
       });
   }
 
-  // --- FETCH STATS ---
-  async function fetchStatsOnly() {
-      try {
-          const res = await fetch(API_URL);
-          if (res.ok) {
-              const data = await res.json(); fullStats = data; updateGlobalSummary(); 
-              Object.keys(getAllQueues()).forEach(qid => { updateStatLabels('ls-', qid); updateStatLabels('l-', qid); });
-          }
-      } catch (e) {}
-  }
-  setInterval(fetchStatsOnly, 10000); fetchStatsOnly();
-
-  function getTooltipHTML(type, qid) {
-      const source = qid ? (fullStats.queuesPeriods[qid] || {}) : fullStats.globalPeriods;
-      const h1 = source.h1 || { ans: 0 }; const h2 = source.h2 || { ans: 0 }; const h4 = source.h4 || { ans: 0 };
-      return `<div class="mono" style="display:grid; grid-template-columns:1fr auto; gap:8px;"><span>1H:</span><span>${h1.ans}</span><span>2H:</span><span>${h2.ans}</span><span>4H:</span><span>${h4.ans}</span></div>`;
-  }
-  
-  function updateStatLabels(prefix, qid) {
-      const stats = getQStats(qid); const elAns = document.getElementById(`${prefix}ans-${qid}`);
-      if(elAns) elAns.textContent = stats.ans;
-      const tipAns = document.getElementById(`${prefix}tip-ans-${qid}`);
-      if(tipAns) tipAns.innerHTML = getTooltipHTML('ans', qid);
-  }
-
   function updateGlobalSummary() {
       const allQueueIds = Object.keys(getAllQueues());
       let totalWaiting = 0; let maxHold = 0; let busyList = [];
@@ -673,11 +632,6 @@
       const mhEl = document.getElementById('gs-max-hold'); 
       mhEl.textContent = formatTime(maxHold);
       mhEl.className = 'g-stat-value mono ' + getHoldColorClass(maxHold);
-
-      let totalAns = 0;
-      if (fullStats.daily && fullStats.daily.queues) Object.values(fullStats.daily.queues).forEach(s => totalAns += s.ans); 
-      document.getElementById('gs-today-ans').textContent = totalAns;
-      document.getElementById('tip-g-ans').innerHTML = getTooltipHTML('ans', null);
 
       const top3Container = document.getElementById('gs-top3');
       if (busyList.length === 0) top3Container.innerHTML = '<div style="opacity:0.5; font-size:11px;">NO CALLS</div>';
@@ -766,17 +720,9 @@
                     <span class="label">Agents</span>
                     <span class="val mono"><span id="logged-${qid}">${data.logged_in}</span> / <span id="avail-${qid}">${data.available}</span></span>
                 </div>
-                <div class="stat-box">
-                    <div class="stat-container" style="display:inline-block">
-                        <span class="label">Ans</span>
-                        <span class="val mono" id="ls-ans-${qid}">0</span>
-                        <div class="stat-tooltip" id="ls-tip-ans-${qid}">...</div>
-                    </div>
-                </div>
             </div>
         </div>
       `;
-      setTimeout(() => updateStatLabels('ls-', qid), 0);
       updateBlockColor(card, data.queued_calls);
       return card;
   }
@@ -789,11 +735,10 @@
         <td><span id="l-hold-${qid}" class="mono ${holdClass}">${formatTime(data.hold)}</span></td>
         <td><span class="badge-count mono" id="l-badge-${qid}">${data.queued_calls}</span></td>
         <td class="mono"><span id="l-logged-${qid}">${data.logged_in}</span> / <span id="l-avail-${qid}">${data.available}</span></td>
-        <td><div class="stat-container"><span class="mono" id="l-ans-${qid}" style="color:var(--status-ok);">0</span><div class="stat-tooltip" id="l-tip-ans-${qid}">...</div></div></td>
       `;
       const detailTr = document.createElement('tr'); detailTr.className = 'detail-row'; detailTr.id = `detail-${qid}`;
-      detailTr.innerHTML = `<td colspan="5" style="padding:0;"><div class="detail-content"><div class="callers-list" id="l-callers-${qid}" style="height:auto; max-height:200px;"></div></div></td>`;
-      setTimeout(() => updateStatLabels('l-', qid), 0); updateBlockColor(tr, data.queued_calls);
+      detailTr.innerHTML = `<td colspan="4" style="padding:0;"><div class="detail-content"><div class="callers-list" id="l-callers-${qid}" style="height:auto; max-height:200px;"></div></div></td>`;
+      updateBlockColor(tr, data.queued_calls);
       return { mainRow: tr, detailRow: detailTr };
   }
 
@@ -836,14 +781,14 @@
           document.getElementById(`count-${qid}`).textContent = d.queued_calls;
           document.getElementById(`logged-${qid}`).textContent = d.logged_in;
           document.getElementById(`avail-${qid}`).textContent = d.available;
-          updateStatLabels('ls-', qid); updateBlockColor(card, d.queued_calls);
+          updateBlockColor(card, d.queued_calls);
       }
       const row = document.getElementById(`row-${qid}`);
       if (row) {
           const badge = document.getElementById(`l-badge-${qid}`); if(badge) badge.textContent = d.queued_calls;
           document.getElementById(`l-logged-${qid}`).textContent = d.logged_in;
           document.getElementById(`l-avail-${qid}`).textContent = d.available;
-          updateStatLabels('l-', qid); updateBlockColor(row, d.queued_calls);
+          updateBlockColor(row, d.queued_calls);
       }
       
       handleTimer(qid, d.hold, d.queued_calls); 
@@ -890,9 +835,9 @@
       
       const gl = document.getElementById(`callers-${qid}`); 
       if(gl) {
-          const scrollPos = gl.scrollTop; // Сохраняем позицию скролла
-          gl.innerHTML = generateHTML(callers); // Отображаем ВСЕХ звонящих без обрезки
-          gl.scrollTop = scrollPos; // Возвращаем позицию скролла на место
+          const scrollPos = gl.scrollTop; 
+          gl.innerHTML = generateHTML(callers); 
+          gl.scrollTop = scrollPos; 
       }
       
       const ll = document.getElementById(`l-callers-${qid}`); 
@@ -986,7 +931,7 @@
   }, 1000);
 
   // Initialize
-  applyZoom(); // Запускаем сохраненный зум при загрузке
+  applyZoom(); 
   document.body.className = getTheme();
   document.getElementById('sortSelectDesk').value = currentSort;
   const cycleBtn = document.getElementById('mobileSortCycleBtn');
