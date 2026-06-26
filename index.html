@@ -871,7 +871,12 @@
       const callers = queueCallers[qid] || [];
       const generateHTML = (list) => {
           if (!list.length) return '<div style="display:flex; height:100%; align-items:center; justify-content:center; color:var(--text-muted); font-size:12px; font-style:italic;">No active callers</div>';
-          return list.map((c, i) => {
+          
+          // Создаем копию списка и сортируем по времени ожидания (joinTime)
+          // Чем меньше joinTime (раньше добавлен), тем выше он в списке. Новые звонки - внизу.
+          const sortedList = [...list].sort((a, b) => a.joinTime - b.joinTime);
+
+          return sortedList.map((c, i) => {
               const copyBtn = c.number ? `<button class="action-btn copy-btn" onclick="event.stopPropagation(); copyText('${c.number}', this)" title="Copy"><svg><use href="#icon-copy"></use></svg></button>` : '';
               let timerHTML = '';
               if (c.joinTime) {
